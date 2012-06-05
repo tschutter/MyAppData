@@ -1,4 +1,0 @@
-AppData
-=======
-
-Windows dotfiles

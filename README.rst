@@ -1,0 +1,15 @@
+AppData
+=======
+
+Windows dotfiles.
+
+Usage
+-----
+::
+
+    cd %AppData%
+    git init
+    git remote add origin https://github.com/tschutter/AppData.git
+    git fetch
+    git branch master origin/master
+    git checkout master
