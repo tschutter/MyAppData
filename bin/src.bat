@@ -1,10 +1,8 @@
 @echo off
 rem
-rem $Id: src.bat 10380 2012-01-24 21:21:47Z tschutter $
-rem
 rem Directory tree navigation
 rem
-rem Copyright (c) 2006-2008 Tom Schutter
+rem Copyright (c) 2006-2012 Tom Schutter
 rem All rights reserved.
 rem
 rem Redistribution and use in source and binary forms, with or without
