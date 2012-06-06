@@ -8,6 +8,7 @@ Installs files in tschutter/homefiles using symbolic links.
 # pylint: disable=C0302
 
 import optparse
+import os
 import sys
 
 if sys.platform != "win32":
@@ -64,6 +65,35 @@ class Reg():
 
         # Close the key.
         _winreg.CloseKey(key)
+
+    def get_value(self, key_path):
+        """Returns a value associated with a specified key."""
+        # Split key_path into hive_name, sub_key, value_name.
+        key_path = key_path.split("\\")
+        hive_name = key_path[0]
+        sub_key = "\\".join(key_path[1:-1])
+        key_name = r"%s\%s" % (hive_name, sub_key)
+        value_name = key_path[-1]
+
+        # Determine the root_key constant.
+        root_key = Reg.hive_key(hive_name)
+
+        # Attempt to open the key.
+        try:
+            key = _winreg.OpenKey(root_key, sub_key, 0, _winreg.KEY_READ)
+        except WindowsError:
+            return None
+
+        # Attempt to get the current value.
+        try:
+            value, _ = _winreg.QueryValueEx(key, value_name)
+        except WindowsError:
+            value = None
+
+        # Close the key.
+        _winreg.CloseKey(key)
+
+        return value
 
     def set_value(self, key_path, vtype, value, create_key=None):
         """Associates a string value with a specified key."""
@@ -130,6 +160,31 @@ class Reg():
     def set_value_str(self, key_path, value, create_key=None):
         self.set_value(key_path, _winreg.REG_SZ, str(value), create_key)
 
+    def set_value_expand_str(self, key_path, value, create_key=None):
+        self.set_value(key_path, _winreg.REG_EXPAND_SZ, str(value), create_key)
+
+
+def add_appdata_bin_to_user_path(reg):
+    """Add %AppData%/bin to user PATH."""
+    # Get the current user PATH.
+    key_path = r"HKCU\Environment\PATH"
+    path = reg.get_value(key_path)
+    if path == None:
+        path_components = list()
+    else:
+        path_components = path.split(";")
+
+    # Check to see if the new path component is already in the existing PATH.
+    appdata_bin = os.path.join(os.environ["AppData"], "bin")
+    for component in path_components:
+        if component.lower() == appdata_bin.lower():
+            return
+
+    # Add the new path component and put it back in the registry.
+    path_components.insert(0, appdata_bin)
+    path = ";".join(path_components)
+    reg.set_value_expand_str(key_path, path, create_key=True)
+
 
 def no_screen_saver(reg):
     """Disable the screen saver."""
@@ -193,6 +248,7 @@ def main():
     reg = Reg(options)
 
     # Update the registry.
+    add_appdata_bin_to_user_path(reg)
     no_hide_known_file_extensions(reg)
     no_screen_saver(reg)
 
