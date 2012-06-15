@@ -12,16 +12,34 @@ set _PREFIX=CYGWIN-SETUP:
 
 goto :main
 
+:get_admin
+    rem Ensure ADMIN privileges
+    rem Adaptation of http://stackoverflow.com/q/4054937 and
+    rem https://sites.google.com/site/eneerge/home/BatchGotAdmin
+
+    rem Check for ADMIN privileges
+    >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+    if "%ERRORLEVEL%" NEQ "0" (
+        rem Get ADMIN privileges
+        echo set UAC = CreateObject^("Shell.Application"^) > "%TEMP%\getadmin.vbs"
+        echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%TEMP%\getadmin.vbs"
+        echo %_PREFIX% Relaunching to get elevated privileges
+        "%TEMP%\getadmin.vbs"
+        del "%TEMP%\getadmin.vbs"
+        exit /B
+    )
+goto :eof
+
 :stop_services
     for /f "usebackq" %%s in (`%_ROOTDIR%\bin\cygrunsrv.exe --list`) do (
-        echo %_PREFIX% Stopping %1
+        echo %_PREFIX% Stopping %%s
         %_ROOTDIR%\bin\cygrunsrv --stop %%s
     )
 goto :eof
 
 :start_services
     for /f "usebackq" %%s in (`%_ROOTDIR%\bin\cygrunsrv.exe --list`) do (
-        echo %_PREFIX% Starting %1
+        echo %_PREFIX% Starting %%s
         %_ROOTDIR%\bin\cygrunsrv --start %%s
     )
 goto :eof
@@ -73,6 +91,7 @@ goto :eof
 goto :eof
 
 :main
+    call :get_admin
     call :get_setup_exe
     call :stop_services
     call :setup
@@ -80,5 +99,4 @@ goto :eof
     call :config_sshd
     call :start_services
     call :config_lsa
-
-endlocal
+    pause
