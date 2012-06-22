@@ -18,11 +18,11 @@ goto :main
 
     echo %_PREFIX% Checking for Administrator privileges
     >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
-    if "%ERRORLEVEL%" NEQ "0" (
+    if "%ERRORLEVEL%" EQU "0" goto :endif_check_admin
         echo %_PREFIX% ERROR: You do not have Administrator privileges
         echo %_PREFIX% Rerun from a "Run as Administrator" command prompt
-        exit
-    )
+        exit /b 1
+    :endif_check_admin
 goto :eof
 
 :stop_services
@@ -104,7 +104,7 @@ goto :eof
 goto :eof
 
 :main
-    call :check_admin
+    call :check_admin ||exit /b 1
     call :get_setup_exe
     call :stop_services
     call :setup
@@ -114,3 +114,5 @@ goto :eof
     call :start_services
     rem Do config_lsa last so that reboot message is last
     call :config_lsa
+
+:exit
