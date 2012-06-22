@@ -12,21 +12,16 @@ set _PREFIX=CYGWIN-SETUP:
 
 goto :main
 
-:get_admin
-    rem Ensure ADMIN privileges
-    rem Adaptation of http://stackoverflow.com/q/4054937 and
+:check_admin
+    rem Check for ADMIN privileges
     rem https://sites.google.com/site/eneerge/home/BatchGotAdmin
 
-    rem Check for ADMIN privileges
+    echo %_PREFIX% Checking for Administrator privileges
     >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
     if "%ERRORLEVEL%" NEQ "0" (
-        rem Get ADMIN privileges
-        echo set UAC = CreateObject^("Shell.Application"^) > "%TEMP%\getadmin.vbs"
-        echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%TEMP%\getadmin.vbs"
-        echo %_PREFIX% Relaunching to get elevated privileges
-        "%TEMP%\getadmin.vbs"
-        del "%TEMP%\getadmin.vbs"
-        exit /B
+        echo %_PREFIX% ERROR: You do not have Administrator privileges
+        echo %_PREFIX% Rerun from a "Run as Administrator" command prompt
+        exit
     )
 goto :eof
 
@@ -49,7 +44,7 @@ goto :eof
         echo %_PREFIX% Creating %_ROOTDIR%
         mkdir %_ROOTDIR%
     )
-    echo %_PREFIX% Fetching latest setup.exe
+    echo %_PREFIX% Fetching latest setup.exe from cygwin.com
     wget --quiet -O %_ROOTDIR%\setup.exe http://cygwin.com/setup.exe
 goto :eof
 
@@ -69,12 +64,30 @@ goto :eof
     )
 goto :eof
 
+:config_syslogd
+    sc query syslogd | findstr "service does not exist" > NUL:
+    if %ERRORLEVEL% NEQ 0 goto :eof
+
+    echo %_PREFIX% Configuring syslogd
+    if not exist %_ROOTDIR%\bin\syslogd-config (
+        echo %_PREFIX% ERROR: inetutils not installed
+        goto :eof
+    )
+    %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/syslogd-config"
+goto :eof
+
 :config_sshd
     sc query sshd | findstr "service does not exist" > NUL:
     if %ERRORLEVEL% NEQ 0 goto :eof
+
     echo %_PREFIX% Configuring sshd
     if not exist %_ROOTDIR%\bin\ssh-host-config (
-        echo %_PREFIX% WARNING: opensshd not installed
+        echo %_PREFIX% ERROR: opensshd not installed
+        goto :eof
+    )
+    findstr /r "^sshd:" %_ROOTDIR%\etc\passwd
+    if %ERRORLEVEL% EQL 0 (
+        echo %_PREFIX% ERROR: sshd account found in /etc/passwd
         goto :eof
     )
     %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/ssh-host-config"
@@ -85,18 +98,19 @@ goto :eof
 :config_lsa
     reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v "Authentication Packages" | findstr cyglsa > NUL:
     if %ERRORLEVEL% EQU 0 goto :eof
+
     echo %_PREFIX% Configuring cyglsa
-    echo %_PREFIX% WARNING: need administrator priv here
-    rem %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/cyglsa-config"
+    %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/cyglsa-config"
 goto :eof
 
 :main
-    call :get_admin
+    call :check_admin
     call :get_setup_exe
     call :stop_services
     call :setup
     call :create_passwd
+    call :config_syslogd
     call :config_sshd
     call :start_services
+    rem Do config_lsa last so that reboot message is last
     call :config_lsa
-    pause
