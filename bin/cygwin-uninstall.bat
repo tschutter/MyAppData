@@ -86,6 +86,10 @@ goto :eof
     rd /s /q %_ROOTDIR%
 goto :eof
 
+:remove_shortcuts
+    echo %_PREFIX% Remove Cygwin shell shortcuts from Desktop and Start menu!
+goto :eof
+
 :remove_local_users
     echo %_PREFIX% Remove sshd and cyg_server local users!
 goto :eof
@@ -97,6 +101,6 @@ goto :eof
     call :stop_services ||exit /b 1
     call :remove_services ||exit /b 1
     call :clean_registry ||exit /b 1
-    rem call :remove_shortcuts ||exit /b 1
     call :remove_cygwin_dir ||exit /b 1
+    call :remove_shortcuts ||exit /b 1
     call :remove_local_users ||exit /b 1
