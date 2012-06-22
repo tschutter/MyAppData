@@ -39,7 +39,7 @@ goto :eof
 :uninstall_lsa
     echo %_PREFIX% Checking if cyglsa is hooked into OS
     reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v "Authentication Packages" | findstr cyglsa > NUL:
-    if %ERRORLEVEL% NEQ 0 goto :eof
+    if %ERRORLEVEL% NEQ 0 exit /b 0
 
     echo %_PREFIX% Checking for sane Authentication Packages value
     for /f "usebackq tokens=4-9" %%f in (`reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v "Authentication Packages"`) do set _AP_VALUE=%%f
