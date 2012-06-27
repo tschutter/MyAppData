@@ -26,6 +26,7 @@ goto :main
 goto :eof
 
 :stop_services
+    if not exist "%_ROOTDIR%\bin\cygrunsrv.exe" goto :eof
     for /f "usebackq" %%s in (`%_ROOTDIR%\bin\cygrunsrv.exe --list`) do (
         echo %_PREFIX% Stopping %%s
         %_ROOTDIR%\bin\cygrunsrv --stop %%s
@@ -86,13 +87,13 @@ goto :eof
         goto :eof
     )
     findstr /r "^sshd:" %_ROOTDIR%\etc\passwd
-    if %ERRORLEVEL% EQL 0 (
+    if %ERRORLEVEL% EQU 0 (
         echo %_PREFIX% ERROR: sshd account found in /etc/passwd
         goto :eof
     )
     %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/ssh-host-config"
+    echo %_PREFIX% Disabling reverse DNS lookup by sshd
     %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/sed -i -e 's/#UseDNS yes/UseDNS no/' /etc/sshd_config"
-    rem%_ROOTDIR%\bin\bash --login -i -c "/usr/bin/chown fdsv-sa-prx-sshdsrvr /etc/ssh* /var/empty /var/log/lastlog"
 goto :eof
 
 :config_lsa
