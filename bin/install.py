@@ -29,13 +29,41 @@ class Reg():
     def hive_key(hive_name):
         """Return the key constant for a hive_name."""
         hive_keys = {
+            "HKCR": _winreg.HKEY_CLASSES_ROOT,
             "HKCU": _winreg.HKEY_CURRENT_USER,
             "HKLM": _winreg.HKEY_LOCAL_MACHINE
         }
         return hive_keys[hive_name]
 
+    def delete_key(self, key_path):
+        """Deletes a specified key."""
+
+        # Split key_path into hive_name, sub_key, value_name.
+        key_path = key_path.split("\\")
+        hive_name = key_path[0]
+        sub_key = "\\".join(key_path[1:])
+        key_name = r"%s\%s" % (hive_name, sub_key)
+
+        # Determine the root_key constant.
+        root_key = Reg.hive_key(hive_name)
+
+        # Attempt to open the key.
+        try:
+            key = _winreg.OpenKey(root_key, sub_key, 0, _winreg.KEY_ALL_ACCESS)
+        except WindowsError:
+            return
+
+        # Close the key.
+        _winreg.CloseKey(key)
+
+        # Delete the key.
+        if self.options.verbose:
+            print "DeleteKey(%s)" % (key_name)
+        if not self.options.dryrun:
+            _winreg.DeleteKey(root_key, sub_key)
+
     def delete_value(self, key_path):
-        """Deletes a value associated, with a specified key."""
+        """Deletes a value associated with a specified key."""
 
         # Split key_path into hive_name, sub_key, value_name.
         key_path = key_path.split("\\")
@@ -214,6 +242,21 @@ def no_hide_known_file_extensions(reg):
     )
 
 
+def no_language_bar(reg):
+    """Disable the language bar."""
+    reg.set_value_dword(
+        r"HKCU\Software\Microsoft\CTF\LangBar\ShowStatus",
+        3
+    )
+    reg.delete_value(
+        r"HKCR\CLSID\{540D8A8B-1C3F-4E32-8132-530F6A502090}\MenuTextPUI"
+    )
+    reg.set_value_dword(
+        r"HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer",
+        0
+    )
+
+
 def no_recycle_bin(reg):
     """Disable the recycle bin."""
 
@@ -256,6 +299,15 @@ def no_screen_saver(reg):
     )
 
 
+def no_shortcut_suffix(reg):
+    """Prevent addition of a "Shortcut to " prefix (WinXP) or a
+    " - Shortcut" suffix (Vista) when creating a shortcut."""
+    #reg.set_value_dword(
+    #    r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\link",
+    #    0
+    #)
+
+
 def main():
     """main"""
 
@@ -294,16 +346,8 @@ def main():
     no_hide_known_file_extensions(reg)
     no_recycle_bin(reg)
     no_screen_saver(reg)
+    no_shortcut_suffix(reg)
 
-    # ; Disable? the language bar.
-    # [HKEY_CURRENT_USER\Software\Microsoft\CTF\LangBar]
-    # "ShowStatus"=dword:00000003
-    #
-    # ; Prevent addition of "Shortcut to " prefix (WinXP) or " - Shortcut"
-    # ; suffix (Vista) when creating a shortcut.
-    # [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer]
-    # "link"=hex:00,00,00,00
-    #
     # ; Setting the font in init.el is problematic because it triggers a
     # ; window resize, which usually pushes the window off of the screen.
     # [HKEY_CURRENT_USER\SOFTWARE\GNU\Emacs]
@@ -315,11 +359,13 @@ def main():
     # ; http://support.microsoft.com/default.aspx?scid=kb;en-us;293814
     # [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Reliability]
     # "ShutdownReasonUI"=dword:00000000
-    # ; Needs verification!
     #
     # ; Display status messages during startup and shutdown.
     # [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System]
     # "verbosestatus"=dword:00000001
+
+    # broken, does not work
+    #no_language_bar(reg)
 
     return 0
 
