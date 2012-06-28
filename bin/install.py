@@ -7,6 +7,8 @@ Installs files in tschutter/homefiles using symbolic links.
 # Registry paths are frequently > 80 chars.
 # pylint: disable=C0302
 
+import ctypes
+import ctypes.wintypes
 import optparse
 import os
 import sys
@@ -185,24 +187,22 @@ def add_appdata_bin_to_user_path(reg):
     path = ";".join(path_components)
     reg.set_value_expand_str(key_path, path, create_key=True)
 
-
-def no_screen_saver(reg):
-    """Disable the screen saver."""
-    reg.set_value_str(r"HKCU\Control Panel\Desktop\ScreenSaveActive", "0")
-    reg.delete_value(r"HKCU\Control Panel\Desktop\SCRNSAVE.EXE")
-
-    reg.set_value_str(
-        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive",
-        "0",
-        create_key = False
-    )
-    reg.delete_value(
-        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\SCRNSAVE.EXE"
-    )
-    reg.set_value_str(
-        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveTimeOut",
-        "36000",
-        create_key = False
+    # Notify explorer.exe of the environment change so that it will
+    # reload it's copy of the environment.  That way newly launched
+    # shells will see the change.
+    # Constants from WinUser.h
+    _HWND_BROADCAST = 0xFFFF
+    _WM_SETTINGCHANGE = 0x001A
+    _SMTO_ABORTIFHUNG = 0x0002
+    result = ctypes.wintypes.DWORD()
+    ctypes.windll.user32.SendMessageTimeoutA(
+        _HWND_BROADCAST,
+        _WM_SETTINGCHANGE,
+        0,
+        "Environment",
+        _SMTO_ABORTIFHUNG,
+        2000,
+        ctypes.byref(result)
     )
 
 
@@ -211,6 +211,48 @@ def no_hide_known_file_extensions(reg):
     reg.set_value_dword(
         r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\HideFileExt",
         0
+    )
+
+
+def no_recycle_bin(reg):
+    """Disable the recycle bin."""
+
+    # Do not move files to the recycle bin.
+    reg.set_value_dword(
+        r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\BitBucket\NukeOnDelete",
+        1
+    )
+
+    # Remove the recycle bin from the desktop.
+    # XP style start menu.
+    reg.set_value_dword(
+        r"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{645FF040-5081-101B-9F08-00AA002F954E}",
+        1,
+        create_key = True
+    )
+    # Classic style start menu.
+    reg.set_value_dword(
+        r"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu\{645FF040-5081-101B-9F08-00AA002F954E}",
+        1,
+        create_key = True
+    )
+
+
+def no_screen_saver(reg):
+    """Disable the screen saver."""
+    reg.set_value_str(r"HKCU\Control Panel\Desktop\ScreenSaveActive", "0")
+    reg.delete_value(r"HKCU\Control Panel\Desktop\SCRNSAVE.EXE")
+
+    reg.set_value_str(
+        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive",
+        "0"
+    )
+    reg.delete_value(
+        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\SCRNSAVE.EXE"
+    )
+    reg.set_value_str(
+        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveTimeOut",
+        "36000"
     )
 
 
@@ -250,7 +292,34 @@ def main():
     # Update the registry.
     add_appdata_bin_to_user_path(reg)
     no_hide_known_file_extensions(reg)
+    no_recycle_bin(reg)
     no_screen_saver(reg)
+
+    # ; Disable? the language bar.
+    # [HKEY_CURRENT_USER\Software\Microsoft\CTF\LangBar]
+    # "ShowStatus"=dword:00000003
+    #
+    # ; Prevent addition of "Shortcut to " prefix (WinXP) or " - Shortcut"
+    # ; suffix (Vista) when creating a shortcut.
+    # [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer]
+    # "link"=hex:00,00,00,00
+    #
+    # ; Setting the font in init.el is problematic because it triggers a
+    # ; window resize, which usually pushes the window off of the screen.
+    # [HKEY_CURRENT_USER\SOFTWARE\GNU\Emacs]
+    # "Emacs.Face.AttributeFont"="Consolas-11"
+    # "Emacs.Geometry"="128x55"
+    #
+    # ; Disable the Shutdown Event Tracker.
+    # ; KB Article(293814): Description of the Shutdown Event Tracker
+    # ; http://support.microsoft.com/default.aspx?scid=kb;en-us;293814
+    # [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Reliability]
+    # "ShutdownReasonUI"=dword:00000000
+    # ; Needs verification!
+    #
+    # ; Display status messages during startup and shutdown.
+    # [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System]
+    # "verbosestatus"=dword:00000001
 
     return 0
 
