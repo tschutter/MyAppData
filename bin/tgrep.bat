@@ -86,12 +86,9 @@ goto main
 
 if not "%PATTERN%" == "" goto pattern_ok
   goto print_usage
-  goto end_main
+  exit /b 1
 :pattern_ok
 
 if "%FIND_NAMES%" == "" set FIND_NAMES=*
 
 findstr %FINDSTR_OPTS% /c:"%PATTERN%" %FIND_NAMES%
-
-:end_main
-endlocal
