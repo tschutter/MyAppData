@@ -13,3 +13,4 @@ Usage
     git fetch
     git branch master origin/master (probably optional)
     git checkout master
+    git submodule update --init --recursive
