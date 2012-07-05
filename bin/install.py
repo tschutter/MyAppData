@@ -8,16 +8,16 @@ Installs files in tschutter/homefiles using symbolic links.
 # pylint: disable=C0302
 
 import ctypes
-import ctypes.wintypes
 import optparse
 import os
 import sys
 
 if sys.platform != "win32":
-    print "Only for Windows"
+    print "Only for Windows (not Cygwin)"
     sys.exit(1)
 
 import _winreg
+import ctypes.wintypes
 
 class Reg():
     """Registry access class."""
