@@ -166,12 +166,20 @@ class Reg():
         # Set the value if it is different.
         if value != orig_value:
             if self.options.verbose:
-                print "SetValue(%s\\%s, %s) was %s" % (
-                    key_name,
-                    value_name,
-                    value,
-                    orig_value
-                )
+                if vtype == _winreg.REG_DWORD:
+                    print "SetValue(%s\\%s, %#08x) was %#08x" % (
+                        key_name,
+                        value_name,
+                        value,
+                        orig_value
+                    )
+                else:
+                    print "SetValue(%s\\%s, %s) was %s" % (
+                        key_name,
+                        value_name,
+                        value,
+                        orig_value
+                    )
             if not self.options.dryrun:
                 _winreg.SetValueEx(
                     key,
@@ -232,6 +240,24 @@ def add_appdata_bin_to_user_path(reg):
         2000,
         ctypes.byref(result)
     )
+
+
+def console_colors(reg):
+    """Set black on white in command prompt."""
+    # Second lowest byte is background color, lowest byte is foreground color.
+    reg.set_value_dword(r"HKCU\Console\ScreenColors", 0x000000f0)
+
+
+def console_quickedit(reg):
+    """Enable "QuickEdit Mode" in command prompt."""
+    reg.set_value_dword(r"HKCU\Console\QuickEdit", 1)
+
+
+def console_layout(reg):
+    """Set windows size of command prompt."""
+    # High word is number of lines, low word is number of columns.
+    reg.set_value_dword(r"HKCU\Console\ScreenBufferSize", 0x0c000080)
+    reg.set_value_dword(r"HKCU\Console\WindowSize", 0x00370080)
 
 
 def no_hide_known_file_extensions(reg):
@@ -343,6 +369,9 @@ def main():
 
     # Update the registry.
     add_appdata_bin_to_user_path(reg)
+    console_colors(reg)
+    console_quickedit(reg)
+    console_layout(reg)
     no_hide_known_file_extensions(reg)
     no_recycle_bin(reg)
     no_screen_saver(reg)
