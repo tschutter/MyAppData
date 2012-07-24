@@ -19,6 +19,7 @@ if sys.platform != "win32":
 import _winreg
 import ctypes.wintypes
 
+
 class Reg():
     """Registry access class."""
     def __init__(self, options):
@@ -102,7 +103,6 @@ class Reg():
         key_path = key_path.split("\\")
         hive_name = key_path[0]
         sub_key = "\\".join(key_path[1:-1])
-        key_name = r"%s\%s" % (hive_name, sub_key)
         value_name = key_path[-1]
 
         # Determine the root_key constant.
@@ -193,12 +193,15 @@ class Reg():
         _winreg.CloseKey(key)
 
     def set_value_dword(self, key_path, value, create_key=None):
+        """Set a REG_DWORD value."""
         self.set_value(key_path, _winreg.REG_DWORD, int(value), create_key)
 
     def set_value_str(self, key_path, value, create_key=None):
+        """Set a REG_SZ value."""
         self.set_value(key_path, _winreg.REG_SZ, str(value), create_key)
 
     def set_value_expand_str(self, key_path, value, create_key=None):
+        """Set a REG_EXPAND_SZ value."""
         self.set_value(key_path, _winreg.REG_EXPAND_SZ, str(value), create_key)
 
 
@@ -297,13 +300,13 @@ def no_recycle_bin(reg):
     reg.set_value_dword(
         r"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{645FF040-5081-101B-9F08-00AA002F954E}",
         1,
-        create_key = True
+        create_key=True
     )
     # Classic style start menu.
     reg.set_value_dword(
         r"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu\{645FF040-5081-101B-9F08-00AA002F954E}",
         1,
-        create_key = True
+        create_key=True
     )
 
 
@@ -312,17 +315,12 @@ def no_screen_saver(reg):
     reg.set_value_str(r"HKCU\Control Panel\Desktop\ScreenSaveActive", "0")
     reg.delete_value(r"HKCU\Control Panel\Desktop\SCRNSAVE.EXE")
 
-    reg.set_value_str(
-        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive",
-        "0"
+    desktop_policies = (
+        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop"
     )
-    reg.delete_value(
-        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\SCRNSAVE.EXE"
-    )
-    reg.set_value_str(
-        r"HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveTimeOut",
-        "36000"
-    )
+    reg.set_value_str(desktop_policies + r"\ScreenSaveActive", "0")
+    reg.delete_value(desktop_policies + r"\SCRNSAVE.EXE")
+    reg.set_value_str(desktop_policies + r"\ScreenSaveTimeOut", "36000")
 
 
 def no_shortcut_suffix(reg):
