@@ -167,19 +167,19 @@ class Reg():
         if value != orig_value:
             if self.options.verbose:
                 if vtype == _winreg.REG_DWORD:
-                    print "SetValue(%s\\%s, %#08x) was %#08x" % (
-                        key_name,
-                        value_name,
-                        value,
-                        orig_value
-                    )
+                    value_format = "%#08x"
                 else:
-                    print "SetValue(%s\\%s, %s) was %s" % (
-                        key_name,
-                        value_name,
-                        value,
-                        orig_value
-                    )
+                    value_format = "%s"
+                if orig_value == None:
+                    orig_value_str = None
+                else:
+                    orig_value_str = value_format % orig_value
+                print ("SetValue(%s\\%s, " + value_format + ") was %s") % (
+                    key_name,
+                    value_name,
+                    value,
+                    orig_value_str
+                )
             if not self.options.dryrun:
                 _winreg.SetValueEx(
                     key,
