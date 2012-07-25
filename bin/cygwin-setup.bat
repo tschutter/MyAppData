@@ -50,7 +50,9 @@ goto :eof
 goto :eof
 
 :setup
-    echo %_PREFIX% Running setup.exe
+    echo %_PREFIX% Running setup.exe to install standard package set
+    %_ROOTDIR%\setup.exe --site %_SITE% --quiet-mode --no-shortcuts --root %_ROOTDIR% --local-package-dir %_ROOTDIR%\LocalPackageDir --packages %_PACKAGES%
+    echo %_PREFIX% Running setup.exe for updates
     %_ROOTDIR%\setup.exe --site %_SITE% --quiet-mode --no-shortcuts --root %_ROOTDIR% --local-package-dir %_ROOTDIR%\LocalPackageDir --packages %_PACKAGES%
 goto :eof
 
