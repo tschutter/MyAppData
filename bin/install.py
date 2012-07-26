@@ -145,7 +145,7 @@ class Reg():
             key = _winreg.OpenKey(root_key, sub_key, 0, _winreg.KEY_ALL_ACCESS)
         except WindowsError:
             if not create_key:
-                return
+                return False
             if self.options.verbose:
                 if key_name not in self.created_keys:
                     print "CreateKey(%s)" % key_name
@@ -164,7 +164,8 @@ class Reg():
                 orig_value = None
 
         # Set the value if it is different.
-        if value != orig_value:
+        changed = value != orig_value
+        if changed:
             if self.options.verbose:
                 if vtype == _winreg.REG_DWORD:
                     value_format = "%#08x"
@@ -192,17 +193,53 @@ class Reg():
         # Close the key.
         _winreg.CloseKey(key)
 
+        return changed
+
+
     def set_value_dword(self, key_path, value, create_key=None):
         """Set a REG_DWORD value."""
-        self.set_value(key_path, _winreg.REG_DWORD, int(value), create_key)
+        return self.set_value(
+            key_path,
+            _winreg.REG_DWORD,
+            int(value),
+            create_key
+        )
 
     def set_value_str(self, key_path, value, create_key=None):
         """Set a REG_SZ value."""
-        self.set_value(key_path, _winreg.REG_SZ, str(value), create_key)
+        return self.set_value(
+            key_path,
+            _winreg.REG_SZ,
+            str(value),
+            create_key
+        )
 
     def set_value_expand_str(self, key_path, value, create_key=None):
         """Set a REG_EXPAND_SZ value."""
-        self.set_value(key_path, _winreg.REG_EXPAND_SZ, str(value), create_key)
+        return self.set_value(
+            key_path,
+            _winreg.REG_EXPAND_SZ,
+            str(value),
+            create_key
+        )
+
+
+def notify_explorer(message=None):
+    """Notify explorer.exe that something changed."""
+    # Constants from WinUser.h
+    _HWND_BROADCAST = 0xFFFF
+    _WM_SETTINGCHANGE = 0x001A
+    _SMTO_ABORTIFHUNG = 0x0002
+    result = ctypes.wintypes.DWORD()
+    ctypes.windll.user32.SendMessageTimeoutA(
+        _HWND_BROADCAST,
+        _WM_SETTINGCHANGE,
+        0,
+        message,
+        _SMTO_ABORTIFHUNG,
+        2000,
+        ctypes.byref(result)
+    )
 
 
 def add_appdata_bin_to_user_path(reg):
@@ -229,20 +266,7 @@ def add_appdata_bin_to_user_path(reg):
     # Notify explorer.exe of the environment change so that it will
     # reload it's copy of the environment.  That way newly launched
     # shells will see the change.
-    # Constants from WinUser.h
-    _HWND_BROADCAST = 0xFFFF
-    _WM_SETTINGCHANGE = 0x001A
-    _SMTO_ABORTIFHUNG = 0x0002
-    result = ctypes.wintypes.DWORD()
-    ctypes.windll.user32.SendMessageTimeoutA(
-        _HWND_BROADCAST,
-        _WM_SETTINGCHANGE,
-        0,
-        "Environment",
-        _SMTO_ABORTIFHUNG,
-        2000,
-        ctypes.byref(result)
-    )
+    notify_explorer("Environment")
 
 
 def console_colors(reg):
@@ -326,10 +350,28 @@ def no_screen_saver(reg):
 def no_shortcut_suffix(reg):
     """Prevent addition of a "Shortcut to " prefix (WinXP) or a
     " - Shortcut" suffix (Vista) when creating a shortcut."""
-    #reg.set_value_dword(
-    #    r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\link",
-    #    0
-    #)
+    #explorer = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer"
+    #reg.set_value_dword(explorer + r"\link", 0)
+
+
+def taskbar_config(reg):
+    """Configure taskbar."""
+    changed = False
+    explorer = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer"
+
+    # always show all icons and notifications on the taskbar
+    changed |= reg.set_value_dword(explorer + r"\EnableAutoTray", 0)
+
+    # use small icons
+    changed |= reg.set_value_dword(explorer + r"\Advanced\TaskbarSmallIcons", 1)
+
+    # never combine taskbar buttons
+    changed |= reg.set_value_dword(explorer + r"\Advanced\TaskbarGlomLevel", 2)
+
+    # Tell explorer.exe to redraw taskbar.  Currently doesn't do the
+    # EnableAutoTray, but a restart of explorer fixes that.
+    if changed:
+        notify_explorer()
 
 
 def main():
@@ -374,6 +416,7 @@ def main():
     no_recycle_bin(reg)
     no_screen_saver(reg)
     no_shortcut_suffix(reg)
+    taskbar_config(reg)
 
     # ; Setting the font in init.el is problematic because it triggers a
     # ; window resize, which usually pushes the window off of the screen.
