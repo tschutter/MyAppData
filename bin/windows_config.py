@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 
 """
-Installs files in tschutter/homefiles using symbolic links.
+Configure Windows settings via the registry.
 """
-
-# Registry paths are frequently > 80 chars.
-# pylint: disable=C0302
 
 import ctypes
 import optparse
@@ -18,6 +15,14 @@ if sys.platform != "win32":
 
 import _winreg
 import ctypes.wintypes
+
+#
+# Registry paths are frequently > 80 chars.
+# pylint: disable=C0302
+#
+# See http://msdn.microsoft.com/en-us/library/ms724833(VS.85).aspx for
+# windowsversion info.
+#
 
 
 class Reg():
@@ -195,7 +200,6 @@ class Reg():
 
         return changed
 
-
     def set_value_dword(self, key_path, value, create_key=None):
         """Set a REG_DWORD value."""
         return self.set_value(
@@ -357,16 +361,24 @@ def no_shortcut_suffix(reg):
 def taskbar_config(reg):
     """Configure taskbar."""
     changed = False
+    windowsversion = sys.getwindowsversion()
     explorer = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer"
 
-    # always show all icons and notifications on the taskbar
-    changed |= reg.set_value_dword(explorer + r"\EnableAutoTray", 0)
+    if windowsversion >= (6, 0):
+        # always show all icons and notifications on the taskbar
+        changed |= reg.set_value_dword(explorer + r"\EnableAutoTray", 0)
 
-    # use small icons
-    changed |= reg.set_value_dword(explorer + r"\Advanced\TaskbarSmallIcons", 1)
+        # never combine taskbar buttons
+        changed |= reg.set_value_dword(explorer + r"\Advanced\TaskbarGlomLevel", 2)
 
-    # never combine taskbar buttons
-    changed |= reg.set_value_dword(explorer + r"\Advanced\TaskbarGlomLevel", 2)
+        # use small icons
+        changed |= reg.set_value_dword(explorer + r"\Advanced\TaskbarSmallIcons", 1)
+
+    else:
+        # do not group similar taskbar buttons
+        changed |= reg.set_value_dword(explorer + r"\Advanced\TaskbarGlomming", 0)
+
+        # hide inactive icons does not seem to change registry
 
     # Tell explorer.exe to redraw taskbar.  Currently doesn't do the
     # EnableAutoTray, but a restart of explorer fixes that.
@@ -391,11 +403,11 @@ def main():
         help="print commands that would be executed, but do not execute them"
     )
     option_parser.add_option(
-        "-v",
-        "--verbose",
-        action="store_true",
+        "-q",
+        "--quiet",
+        action="store_false",
         dest="verbose",
-        default=False,
+        default=True,
         help="print commands as they are executed"
     )
     (options, args) = option_parser.parse_args()
@@ -442,3 +454,7 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+# Local Variables:
+# whitespace-line-column: 150
+# End:
