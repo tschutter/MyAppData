@@ -50,10 +50,38 @@ class Reg():
         }
         return hive_keys[hive_name]
 
+    @staticmethod
+    def enum_subkeys(key_path):
+        """Generator that yields the names of all subkeys."""
+
+        # Split key_path into hive_name, sub_key.
+        key_path = key_path.split("\\")
+        hive_name = key_path[0]
+        sub_key = "\\".join(key_path[1:])
+
+        # Determine the root_key constant.
+        root_key = Reg.hive_key(hive_name)
+
+        # Attempt to open the key.
+        try:
+            key = _winreg.OpenKey(root_key, sub_key)
+        except WindowsError:
+            raise StopIteration
+
+        index = 0
+        while True:
+            try:
+                yield _winreg.EnumKey(key, index)
+            except WindowsError, details:
+                if details[0] == 259:
+                    raise StopIteration
+                raise
+            index += 1
+
     def delete_key(self, key_path):
         """Deletes a specified key."""
 
-        # Split key_path into hive_name, sub_key, value_name.
+        # Split key_path into hive_name, sub_key.
         key_path = key_path.split("\\")
         hive_name = key_path[0]
         sub_key = "\\".join(key_path[1:])
@@ -111,7 +139,8 @@ class Reg():
         # Close the key.
         _winreg.CloseKey(key)
 
-    def get_value(self, key_path):
+    @staticmethod
+    def get_value(key_path):
         """Returns a value associated with a specified key."""
         # Split key_path into hive_name, sub_key, value_name.
         key_path = key_path.split("\\")
@@ -335,26 +364,38 @@ def no_language_bar(reg):
 
 def no_recycle_bin(reg):
     """Disable the recycle bin."""
+    changed = False
+
+    explorer = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer"
 
     # Do not move files to the recycle bin.
-    reg.set_value_dword(
-        r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\BitBucket\NukeOnDelete",
-        1
-    )
+    if sys.getwindowsversion() >= (6, 0):
+        volume_key = explorer + r"\BitBucket\Volume"
+        for volume in reg.enum_subkeys(volume_key):
+            changed |= reg.set_value_dword(volume_key + "\\" + volume + r"\NukeOnDelete", 1, create_key=True)
+    else:
+        changed |= reg.set_value_dword(
+            r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\BitBucket\NukeOnDelete",
+            1
+        )
 
     # Remove the recycle bin from the desktop.
     # XP style start menu.
-    reg.set_value_dword(
-        r"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{645FF040-5081-101B-9F08-00AA002F954E}",
+    changed |= reg.set_value_dword(
+        explorer + r"\HideDesktopIcons\NewStartPanel\{645FF040-5081-101B-9F08-00AA002F954E}",
         1,
         create_key=True
     )
     # Classic style start menu.
-    reg.set_value_dword(
-        r"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu\{645FF040-5081-101B-9F08-00AA002F954E}",
+    changed |= reg.set_value_dword(
+        explorer + r"\HideDesktopIcons\ClassicStartMenu\{645FF040-5081-101B-9F08-00AA002F954E}",
         1,
         create_key=True
     )
+
+    if changed:
+        # Not working for win7.
+        notify_explorer()
 
 
 def no_screen_saver(reg):
