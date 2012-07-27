@@ -22,6 +22,15 @@ import ctypes.wintypes
 #
 # See http://msdn.microsoft.com/en-us/library/ms724833(VS.85).aspx for
 # windowsversion info.
+# 6.2 Windows 8
+# 6.2 Windows Server 2012
+# 6.1 Windows 7
+# 6.1 Windows Server 2008 R2
+# 6.0 Windows Server 2008
+# 6.0 Windows Vista
+# 5.2 Windows Server 2003
+# 5.1 Windows XP
+# 5.0 Windows 2000
 #
 
 
@@ -291,6 +300,16 @@ def console_layout(reg):
     reg.set_value_dword(r"HKCU\Console\WindowSize", 0x00370080)
 
 
+def hide_cyg_server_login(reg):
+    """Hide "Privileged server" account from login screen on Vista and later."""
+    if sys.getwindowsversion() >= (6, 0):
+        reg.set_value_dword(
+            r"HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList\cyg_server",
+            0,
+            create_key=True
+        )
+
+
 def no_hide_known_file_extensions(reg):
     """Disable "Hide known file extensions" in Windows Explorer."""
     reg.set_value_dword(
@@ -388,7 +407,6 @@ def taskbar_config(reg):
 
 def main():
     """main"""
-
     # Parse command line options.
     option_parser = optparse.OptionParser(
         usage="usage: %prog [options]\n" +
@@ -416,6 +434,10 @@ def main():
     if options.dryrun:
         options.verbose = True
 
+    if sys.getwindowsversion() >= (6, 0) and not ctypes.windll.shell32.IsUserAnAdmin():
+        print "ERROR: This script requires elevated privileges.  Run as Administrator."
+        return 1
+
     # Create a registry access object.
     reg = Reg(options)
 
@@ -424,6 +446,7 @@ def main():
     console_colors(reg)
     console_quickedit(reg)
     console_layout(reg)
+    hide_cyg_server_login(reg)
     no_hide_known_file_extensions(reg)
     no_recycle_bin(reg)
     no_screen_saver(reg)
