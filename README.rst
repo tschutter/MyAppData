@@ -14,3 +14,7 @@ Usage
     git branch master origin/master (probably optional)
     git checkout master
     git submodule update --init --recursive
+
+To create a zipfile::
+
+    zip -r /tmp/AppData.zip . --exclude .git\*
