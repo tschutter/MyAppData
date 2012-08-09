@@ -8,7 +8,7 @@ setlocal
 set _PACKAGES=cron,diffutils,inetutils,ncurses,netcat,openssh,p7zip,procps,python,rsync,screen,unzip,vim,zip,genisoimage,w3m,wodim
 set _ROOTDIR=C:\cygwin
 set _SITE=http://mirrors.xmission.com/cygwin
-set _PREFIX=CYGWIN-SETUP:
+set _PREFIX=CYGWIN_SETUP:
 
 goto :main
 
