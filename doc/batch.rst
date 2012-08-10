@@ -13,9 +13,13 @@ this pattern::
     :func
         echo In func
         if something bad then exit /b 1
-    goto :eof
+    exit /b 0
 
     call :func || exit /b 1
+
+Note that you cannot use the normal "goto :eof" to return from the
+function, because (at least on WinXP) that will not set the errorlevel
+to 0.
 
 See `How to to terminate a windows batch file from within a 'call'ed
 routine?
