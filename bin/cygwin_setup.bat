@@ -23,10 +23,11 @@ goto :main
         echo %_PREFIX% Rerun from a "Run as Administrator" command prompt
         exit /b 1
     :endif_check_admin
-goto :eof
+exit /b 0
 
 
 :stop_services
+    rem Stop all Cygwin services.
     if not exist "%_ROOTDIR%\bin\cygrunsrv.exe" goto :eof
     for /f "usebackq" %%s in (`%_ROOTDIR%\bin\cygrunsrv.exe --list`) do (
         echo %_PREFIX% Stopping %%s
@@ -36,12 +37,15 @@ goto :eof
 
 
 :start_service
+    rem Start a single Cygwin service.
     echo %_PREFIX% Starting %1
     %_ROOTDIR%\bin\cygrunsrv --start %1
 goto :eof
 
 
 :start_services
+    rem Start all Cygwin services.
+
     rem Start syslogd first.
     for /f "usebackq" %%s in (`%_ROOTDIR%\bin\cygrunsrv.exe --list`) do (
         if "%%s" == "syslogd" call :start_service %%s
@@ -54,6 +58,7 @@ goto :eof
 
 
 :get_setup_exe
+    rem Download latest setup.exe.
     if not exist %_ROOTDIR% (
         echo %_PREFIX% Creating %_ROOTDIR%
         mkdir %_ROOTDIR%
@@ -63,7 +68,33 @@ goto :eof
 goto :eof
 
 
+:check_for_cygwin_proc
+    rem Check for any Cygwin processes.
+    echo %_PREFIX% Checking for running Cygwin processes
+    set _TEMPFILE=%TEMP%\cygwin_setup.txt
+    :retry
+        %_ROOTDIR%\bin\ps -l | findstr /v /c:"/usr/bin/ps" > %_TEMPFILE%
+        findstr /v /r /c:"PID.*COMMAND" %_TEMPFILE% | findstr /r /c:"^..*" > NUL:
+        if ERRORLEVEL 1 goto :ignore
+        echo %_PREFIX% Found running Cygwin processes
+        type %_TEMPFILE%
+        del %_TEMPFILE%
+        :ask_abort_retry_ignore
+            set /p _ANSWER=Abort, Retry, or Ignore?
+            set _ANSWER=%_ANSWER:~0,1%
+            if "%_ANSWER%" == "a" exit /b 1
+            if "%_ANSWER%" == "A" exit /b 1
+            if "%_ANSWER%" == "r" goto :retry
+            if "%_ANSWER%" == "R" goto :retry
+            if "%_ANSWER%" == "i" goto :ignore
+            if "%_ANSWER%" == "I" goto :ignore
+        goto :ask_abort_retry_ignore
+    :ignore
+exit /b 0
+
+
 :setup
+    rem Run setup.exe.
     echo %_PREFIX% Running setup.exe for updates
     %_ROOTDIR%\setup.exe --site %_SITE% --quiet-mode --no-shortcuts --root %_ROOTDIR% --local-package-dir %_ROOTDIR%\LocalPackageDir
     echo %_PREFIX% Running setup.exe to install standard package set
@@ -72,6 +103,7 @@ goto :eof
 
 
 :create_passwd
+    rem Create local passwd and group files.
     if not exist %_ROOTDIR%\etc\passwd (
         echo %_PREFIX% Creating /etc/passwd
         %_ROOTDIR%\bin\bash --login -i -c '/usr/bin/mkpasswd --local > /etc/passwd'
@@ -129,6 +161,7 @@ goto :eof
     call :check_admin ||exit /b 1
     call :get_setup_exe
     call :stop_services
+    call :check_for_cygwin_proc ||exit /b 1
     call :setup
     call :create_passwd
     call :config_syslogd
