@@ -29,9 +29,9 @@ exit /b 0
 :stop_services
     rem Stop all Cygwin services.
     if not exist "%_ROOTDIR%\bin\cygrunsrv.exe" goto :eof
-    for /f "usebackq" %%s in (`%_ROOTDIR%\bin\cygrunsrv.exe --list`) do (
+    for /f "usebackq" %%s in (`"%_ROOTDIR%\bin\cygrunsrv.exe" --list`) do (
         echo %_PREFIX% Stopping %%s
-        %_ROOTDIR%\bin\cygrunsrv --stop %%s
+        "%_ROOTDIR%\bin\cygrunsrv.exe" --stop %%s
     )
 goto :eof
 
@@ -39,7 +39,7 @@ goto :eof
 :start_service
     rem Start a single Cygwin service.
     echo %_PREFIX% Starting %1
-    %_ROOTDIR%\bin\cygrunsrv --start %1
+    "%_ROOTDIR%\bin\cygrunsrv.exe" --start %1
 goto :eof
 
 
@@ -47,33 +47,23 @@ goto :eof
     rem Start all Cygwin services.
 
     rem Start syslogd first.
-    for /f "usebackq" %%s in (`%_ROOTDIR%\bin\cygrunsrv.exe --list`) do (
+    for /f "usebackq" %%s in (`"%_ROOTDIR%\bin\cygrunsrv.exe" --list`) do (
         if "%%s" == "syslogd" call :start_service %%s
     )
     rem Start rest of services.
-    for /f "usebackq" %%s in (`%_ROOTDIR%\bin\cygrunsrv.exe --list`) do (
+    for /f "usebackq" %%s in (`"%_ROOTDIR%\bin\cygrunsrv.exe" --list`) do (
         if not "%%s" == "syslogd" call :start_service %%s
     )
-goto :eof
-
-
-:get_setup_exe
-    rem Download latest setup.exe.
-    if not exist %_ROOTDIR% (
-        echo %_PREFIX% Creating %_ROOTDIR%
-        mkdir %_ROOTDIR%
-    )
-    echo %_PREFIX% Fetching latest setup.exe from cygwin.com
-    wget --quiet -O %_ROOTDIR%\setup.exe http://cygwin.com/setup.exe
 goto :eof
 
 
 :check_for_cygwin_proc
     rem Check for any Cygwin processes.
     echo %_PREFIX% Checking for running Cygwin processes
+    if not exist "%_ROOTDIR%\bin\ps.exe" exit /b 0
     set _TEMPFILE=%TEMP%\cygwin_setup.txt
     :retry
-        %_ROOTDIR%\bin\ps -l | findstr /v /c:"/usr/bin/ps" > %_TEMPFILE%
+        "%_ROOTDIR%\bin\ps.exe" -l | findstr /v /c:"/usr/bin/ps" > %_TEMPFILE%
         findstr /v /r /c:"PID.*COMMAND" %_TEMPFILE% | findstr /r /c:"^..*" > NUL:
         if ERRORLEVEL 1 goto :ignore
         echo %_PREFIX% Found running Cygwin processes
@@ -93,24 +83,35 @@ goto :eof
 exit /b 0
 
 
+:get_setup_exe
+    rem Download latest setup.exe.
+    if not exist %_ROOTDIR% (
+        echo %_PREFIX% Creating %_ROOTDIR%
+        mkdir "%_ROOTDIR%"
+    )
+    echo %_PREFIX% Fetching latest setup.exe from cygwin.com
+    wget --quiet -O "%_ROOTDIR%\setup.exe" http://cygwin.com/setup.exe
+goto :eof
+
+
 :setup
     rem Run setup.exe.
     echo %_PREFIX% Running setup.exe for updates
-    %_ROOTDIR%\setup.exe --site %_SITE% --quiet-mode --no-shortcuts --root %_ROOTDIR% --local-package-dir %_ROOTDIR%\LocalPackageDir
+    "%_ROOTDIR%\setup.exe" --site %_SITE% --quiet-mode --no-shortcuts --root "%_ROOTDIR%" --local-package-dir "%_ROOTDIR%\LocalPackageDir"
     echo %_PREFIX% Running setup.exe to install standard package set
-    %_ROOTDIR%\setup.exe --site %_SITE% --quiet-mode --no-shortcuts --root %_ROOTDIR% --local-package-dir %_ROOTDIR%\LocalPackageDir --packages %_PACKAGES%
+    "%_ROOTDIR%\setup.exe" --site %_SITE% --quiet-mode --no-shortcuts --root "%_ROOTDIR%" --local-package-dir "%_ROOTDIR%\LocalPackageDir" --packages %_PACKAGES%
 goto :eof
 
 
 :create_passwd
     rem Create local passwd and group files.
-    if not exist %_ROOTDIR%\etc\passwd (
+    if not exist "%_ROOTDIR%\etc\passwd" (
         echo %_PREFIX% Creating /etc/passwd
-        %_ROOTDIR%\bin\bash --login -i -c '/usr/bin/mkpasswd --local > /etc/passwd'
+        "%_ROOTDIR%\bin\bash.exe" --login -i -c '/usr/bin/mkpasswd --local > /etc/passwd'
     )
-    if not exist %_ROOTDIR%\etc\group (
+    if not exist "%_ROOTDIR%\etc\group" (
         echo %_PREFIX% Creating /etc/group
-        %_ROOTDIR%\bin\bash --login -i -c '/usr/bin/mkgroup --local > /etc/group'
+        "%_ROOTDIR%\bin\bash.exe" --login -i -c '/usr/bin/mkgroup --local > /etc/group'
     )
 goto :eof
 
@@ -120,11 +121,11 @@ goto :eof
     if %ERRORLEVEL% NEQ 0 goto :eof
 
     echo %_PREFIX% Configuring syslogd
-    if not exist %_ROOTDIR%\bin\syslogd-config (
+    if not exist "%_ROOTDIR%\bin\syslogd-config" (
         echo %_PREFIX% ERROR: inetutils not installed
         goto :eof
     )
-    %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/syslogd-config"
+    "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/syslogd-config"
 goto :eof
 
 
@@ -133,18 +134,18 @@ goto :eof
     if %ERRORLEVEL% NEQ 0 goto :eof
 
     echo %_PREFIX% Configuring sshd
-    if not exist %_ROOTDIR%\bin\ssh-host-config (
+    if not exist "%_ROOTDIR%\bin\ssh-host-config" (
         echo %_PREFIX% ERROR: opensshd not installed
         goto :eof
     )
-    findstr /r "^sshd:" %_ROOTDIR%\etc\passwd
+    findstr /r "^sshd:" "%_ROOTDIR%\etc\passwd"
     if %ERRORLEVEL% EQU 0 (
         echo %_PREFIX% ERROR: sshd account found in /etc/passwd
         goto :eof
     )
-    %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/ssh-host-config"
+    "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/ssh-host-config"
     echo %_PREFIX% Disabling reverse DNS lookup by sshd
-    %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/sed -i -e 's/#UseDNS yes/UseDNS no/' /etc/sshd_config"
+    "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/sed -i -e 's/#UseDNS yes/UseDNS no/' /etc/sshd_config"
 goto :eof
 
 
@@ -153,15 +154,15 @@ goto :eof
     if %ERRORLEVEL% EQU 0 goto :eof
 
     echo %_PREFIX% Configuring cyglsa
-    %_ROOTDIR%\bin\bash --login -i -c "/usr/bin/cyglsa-config"
+    "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/cyglsa-config"
 goto :eof
 
 
 :main
     call :check_admin ||exit /b 1
-    call :get_setup_exe
     call :stop_services
     call :check_for_cygwin_proc ||exit /b 1
+    call :get_setup_exe
     call :setup
     call :create_passwd
     call :config_syslogd
