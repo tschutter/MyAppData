@@ -103,6 +103,14 @@ goto :eof
 goto :eof
 
 
+:rebaseall
+    rem Run rebaseall.
+    rem See http://cygwin.com/ml/cygwin/2012-08/msg00320.html
+    echo %_PREFIX% Running rebaseall
+    "%_ROOTDIR%\bin\dash.exe" -c 'cd /usr/bin; PATH=. ; rebaseall'
+goto :eof
+
+
 :create_passwd
     rem Create local passwd and group files.
     if not exist "%_ROOTDIR%\etc\passwd" (
@@ -164,6 +172,7 @@ goto :eof
     call :check_for_cygwin_proc ||exit /b 1
     call :get_setup_exe
     call :setup
+    call :rebaseall
     call :create_passwd
     call :config_syslogd
     call :config_sshd
