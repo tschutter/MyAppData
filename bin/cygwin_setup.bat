@@ -45,21 +45,58 @@ rem
 
 setlocal
 
-rem Configuration.
-set _PACKAGES=cron,diffutils,inetutils,ncurses,netcat,openssh,p7zip,procps,python,rsync,screen,unzip,vim,zip,genisoimage,w3m,wodim
-set _ROOTDIR=C:\cygwin
-set _SITE=http://mirrors.xmission.com/cygwin
+rem Global constants.
 set _PREFIX=CYGWIN_SETUP:
 
 goto :main
+
+:load_config
+    set _CONFFILE=%~dp0\cygwin_setup_config.bat
+    if exist "%_CONFFILE%" goto :endif_check_conffile
+        echo %_PREFIX% ERROR: Configuration file "%_CONFFILE%" not found.
+        exit /b 1
+    :endif_check_conffile
+    set _PACKAGES=
+    set _ROOTDIR=
+    set _SITE=
+    set _CONFIG_SYSLOGD=
+    set _CONFIG_SSHD=
+    set _CONFIG_LSA=
+    call "%_CONFFILE%"
+    if "%_PACKAGES%" == "" (
+        echo %_PREFIX% ERROR: _PACKAGES not defined in "%_CONFFILE%"
+        exit /b 1
+    )
+    if "%_ROOTDIR%" == "" (
+        echo %_PREFIX% ERROR: _ROOTDIR not defined in "%_CONFFILE%"
+        exit /b 1
+    )
+    if "%_SITE%" == "" (
+        echo %_PREFIX% ERROR: _SITE not defined in "%_CONFFILE%"
+        exit /b 1
+    )
+    if "%_CONFIG_SYSLOGD%" == "" (
+        echo %_PREFIX% ERROR: _CONFIG_SYSLOGD not defined in "%_CONFFILE%"
+        exit /b 1
+    )
+    if "%_CONFIG_SSHD%" == "" (
+        echo %_PREFIX% ERROR: _CONFIG_SSHD not defined in "%_CONFFILE%"
+        exit /b 1
+    )
+    if "%_CONFIG_LSA%" == "" (
+        echo %_PREFIX% ERROR: _CONFIG_LSA not defined in "%_CONFFILE%"
+        exit /b 1
+    )
+exit /b 0
+
 
 :check_admin
     rem Check for ADMIN privileges
     rem https://sites.google.com/site/eneerge/home/BatchGotAdmin
 
     echo %_PREFIX% Checking for Administrator privileges
-    >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
-    if "%ERRORLEVEL%" EQU "0" goto :endif_check_admin
+    "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system" >nul 2>&1
+    if not ERRORLEVEL 1 goto :endif_check_admin
         echo %_PREFIX% ERROR: You do not have Administrator privileges
         echo %_PREFIX% Rerun from a "Run as Administrator" command prompt
         exit /b 1
@@ -104,12 +141,12 @@ goto :eof
     if not exist "%_ROOTDIR%\bin\ps.exe" exit /b 0
     set _TEMPFILE=%TEMP%\cygwin_setup.txt
     :retry
-        "%_ROOTDIR%\bin\ps.exe" -l | findstr /v /c:"/usr/bin/ps" > %_TEMPFILE%
-        findstr /v /r /c:"PID.*COMMAND" %_TEMPFILE% | findstr /r /c:"^..*" > NUL:
+        "%_ROOTDIR%\bin\ps.exe" -l | findstr /v /c:"/usr/bin/ps" > "%_TEMPFILE%"
+        findstr /v /r /c:"PID.*COMMAND" "%_TEMPFILE%" | findstr /r /c:"^..*" > NUL:
         if ERRORLEVEL 1 goto :ignore
         echo %_PREFIX% Found running Cygwin processes
-        type %_TEMPFILE%
-        del %_TEMPFILE%
+        type "%_TEMPFILE%"
+        del "%_TEMPFILE%"
         :ask_abort_retry_ignore
             set /p _ANSWER=Abort, Retry, or Ignore?
             set _ANSWER=%_ANSWER:~0,1%
@@ -167,7 +204,7 @@ goto :eof
 
 :config_syslogd
     sc query syslogd | findstr "service does not exist" > NUL:
-    if %ERRORLEVEL% NEQ 0 goto :eof
+    if ERRORLEVEL 1 goto :eof
 
     echo %_PREFIX% Configuring syslogd
     if not exist "%_ROOTDIR%\bin\syslogd-config" (
@@ -180,7 +217,7 @@ goto :eof
 
 :config_sshd
     sc query sshd | findstr "service does not exist" > NUL:
-    if %ERRORLEVEL% NEQ 0 goto :eof
+    if ERRORLEVEL 1 goto :eof
 
     echo %_PREFIX% Configuring sshd
     if not exist "%_ROOTDIR%\bin\ssh-host-config" (
@@ -188,7 +225,7 @@ goto :eof
         goto :eof
     )
     findstr /r "^sshd:" "%_ROOTDIR%\etc\passwd"
-    if %ERRORLEVEL% EQU 0 (
+    if not ERRORLEVEL 1 (
         echo %_PREFIX% ERROR: sshd account found in /etc/passwd
         goto :eof
     )
@@ -200,7 +237,7 @@ goto :eof
 
 :config_lsa
     reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v "Authentication Packages" | findstr cyglsa > NUL:
-    if %ERRORLEVEL% EQU 0 goto :eof
+    if not ERRORLEVEL 1 goto :eof
 
     echo %_PREFIX% Configuring cyglsa
     "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/cyglsa-config"
@@ -208,6 +245,7 @@ goto :eof
 
 
 :main
+    call :load_config ||exit /b 1
     call :check_admin ||exit /b 1
     call :stop_services
     call :check_for_cygwin_proc ||exit /b 1
@@ -215,9 +253,9 @@ goto :eof
     call :setup
     call :rebaseall
     call :create_passwd
-    call :config_syslogd
-    call :config_sshd
+    if "%_CONFIG_SYSLOGD%" == "True" call :config_syslogd
+    if "%_CONFIG_SSHD%" == "True" call :config_sshd
     call :start_services
     rem Do config_lsa last so that reboot message is last
-    call :config_lsa
+    if "%_CONFIG_LSA%" == "True" call :config_lsa
 :exit
