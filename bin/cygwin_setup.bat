@@ -2,9 +2,50 @@
 rem
 rem Install or update Cygwin.
 rem
+rem Features of this batch file:
+rem   * Mostly hands-free, except for stopping of running Cygwin
+rem     processes and configuration of newly installed services.
+rem   * Stops and starts Cygwin services.
+rem   * Lists running Cygwin processes (setup.exe informs you that
+rem     they are running, but does not list them).
+rem   * Fetches latest setup.exe from cygwin.com.
+rem   * Installs standard set of packages.
+rem   * Updates all installed packages.
+rem   * Runs rebaseall.
+rem   * Installs standard services (syslogd, sshd).
+rem   * Installs cyglsa.
+rem
+rem Copyright (c) 2012-2012 Tom Schutter
+rem All rights reserved.
+rem
+rem Redistribution and use in source and binary forms, with or without
+rem modification, are permitted provided that the following conditions
+rem are met:
+rem
+rem    - Redistributions of source code must retain the above copyright
+rem      notice, this list of conditions and the following disclaimer.
+rem    - Redistributions in binary form must reproduce the above
+rem      copyright notice, this list of conditions and the following
+rem      disclaimer in the documentation and/or other materials provided
+rem      with the distribution.
+rem
+rem THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+rem "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+rem LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+rem FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+rem COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+rem INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+rem BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+rem LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+rem CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+rem LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+rem ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+rem POSSIBILITY OF SUCH DAMAGE.
+rem
 
 setlocal
 
+rem Configuration.
 set _PACKAGES=cron,diffutils,inetutils,ncurses,netcat,openssh,p7zip,procps,python,rsync,screen,unzip,vim,zip,genisoimage,w3m,wodim
 set _ROOTDIR=C:\cygwin
 set _SITE=http://mirrors.xmission.com/cygwin
