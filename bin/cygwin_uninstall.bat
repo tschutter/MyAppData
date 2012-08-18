@@ -35,6 +35,8 @@ setlocal
 
 rem Configuration.
 set _ROOTDIR=C:\cygwin
+
+rem Global constants.
 set _PREFIX=CYGWIN_UNINSTALL:
 
 goto :main
