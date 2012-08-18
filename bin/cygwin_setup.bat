@@ -44,10 +44,6 @@ rem POSSIBILITY OF SUCH DAMAGE.
 rem
 
 setlocal
-
-rem Global constants.
-set _PREFIX=CYGWIN_SETUP:
-
 goto :main
 
 :load_config
@@ -245,6 +241,9 @@ goto :eof
 
 
 :main
+    rem Global constants.
+    set _PREFIX=CYGWIN_SETUP:
+
     call :load_config ||exit /b 1
     call :check_admin ||exit /b 1
     call :stop_services
