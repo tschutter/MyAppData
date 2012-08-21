@@ -179,6 +179,9 @@ goto :eof
 
 :rebaseall
     rem Run rebaseall.
+    rem This should be handled by setup.exe, but at this time
+    rem setup.exe does not handle all cases.  And running rebaseall
+    rem unnecessarily should cause no harm.
     rem See http://cygwin.com/ml/cygwin/2012-08/msg00320.html
     echo %_PREFIX% Running rebaseall
     "%_ROOTDIR%\bin\dash.exe" -c 'cd /usr/bin; PATH=. ; rebaseall'
