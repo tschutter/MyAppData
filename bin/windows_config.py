@@ -2,6 +2,8 @@
 
 """
 Configure Windows settings via the registry.
+
+Use Regshot to determine which registry keys to change.
 """
 
 import ctypes
