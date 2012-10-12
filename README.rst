@@ -26,4 +26,10 @@ Update::
 
 To create a distribution zipfile on Linux::
 
-    zip -r /tmp/AppData.zip . --exclude .git\*
+    zip -r /tmp/AppData.zip . --exclude\
+        .git\*\
+        .emacs.d/.git\*\
+        .emacs.d/elisp/yasnippet/.git\*\
+        .emacs.d/elisp/yasnippet/extras/bundles/html-tmbundle/.git\*\
+        .emacs.d/elisp/yasnippet/extras/bundles/rails-tmbundle/.git\*\
+        .emacs.d/elisp/yasnippet/extras/bundles/ruby-tmbundle/.git\*
