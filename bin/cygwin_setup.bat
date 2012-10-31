@@ -90,7 +90,6 @@ exit /b 0
     rem Check for ADMIN privileges
     rem https://sites.google.com/site/eneerge/home/BatchGotAdmin
 
-    echo %_PREFIX% Checking for Administrator privileges
     "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system" >nul 2>&1
     if not ERRORLEVEL 1 goto :endif_check_admin
         echo %_PREFIX% ERROR: You do not have Administrator privileges
@@ -98,6 +97,14 @@ exit /b 0
         exit /b 1
     :endif_check_admin
 exit /b 0
+
+
+:check_for_wget_exe
+    rem wget.exe is used to fetch setup.exe
+    for /f %%i in ("wget.exe") do if not "%%~$PATH:i" == "" exit /b 0
+    echo %_PREFIX% ERROR: wget.exe not found in PATH
+    echo %_PREFIX% One source is http://users.ugent.be/~bpuype/wget/
+exit /b 1
 
 
 :stop_services
@@ -249,6 +256,7 @@ goto :eof
 
     call :load_config ||exit /b 1
     call :check_admin ||exit /b 1
+    call :check_for_wget_exe ||exit /b 1
     call :stop_services
     call :check_for_cygwin_proc ||exit /b 1
     call :get_setup_exe
