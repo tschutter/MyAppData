@@ -1,4 +1,4 @@
-Copyright (c) 2012 Tom Schutter
+Copyright (c) 2006 Tom Schutter
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
