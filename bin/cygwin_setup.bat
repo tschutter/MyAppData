@@ -101,6 +101,7 @@ exit /b 0
 
 :check_for_wget_exe
     rem wget.exe is used to fetch setup.exe
+    if exist wget.exe exit /b 0
     for /f %%i in ("wget.exe") do if not "%%~$PATH:i" == "" exit /b 0
     echo %_PREFIX% ERROR: wget.exe not found in PATH
     echo %_PREFIX% One source is http://users.ugent.be/~bpuype/wget/
