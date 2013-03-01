@@ -21,22 +21,22 @@ arrOUs = Split(objComputer.Parent, ",")
 Dim arrMainOU
 arrMainOU = Split(arrOUs(0), "=")
 
-WScript.Echo "Name: " & objComputer.name
-WScript.Echo "cn: " & objComputer.cn
-WScript.Echo "ComputerName: " & objComputer.ComputerName
-WScript.Echo "SiteName: " & objComputer.SiteName
-WScript.Echo "DNSHostName: " & objComputer.DNSHostName
-WScript.Echo "DomainShortName: " & objComputer.DomainShortName
-WScript.Echo "DomainDNSName: " & objComputer.DomainDNSName
-WScript.Echo "ForestDNSName: " & objComputer.ForestDNSName
+WScript.Echo "ADSystemInfo.ComputerName: " & objSysInfo.ComputerName
+WScript.Echo "ADSystemInfo.SiteName: " & objSysInfo.SiteName
+WScript.Echo "ADSystemInfo.DomainShortName: " & objSysInfo.DomainShortName
+WScript.Echo "ADSystemInfo.DomainDNSName: " & objSysInfo.DomainDNSName
+WScript.Echo "ADSystemInfo.ForestDNSName: " & objSysInfo.ForestDNSName
 
-WScript.Echo "OperatingSystem: " & objComputer.operatingSystem
-WScript.Echo "ServicePack: " & objComputer.operatingSystemServicePack
-WScript.Echo "SAMAccountName: " & objComputer.sAMAccountName
-WScript.Echo "Location: " & objComputer.location
-WScript.Echo "UserAccountControl: " & objComputer.userAccountControl
-WScript.Echo "PrimaryGroupID: " & objComputer.primaryGroupID
-WScript.Echo "WhenCreated: " & objComputer.whenCreated
-WScript.Echo "WhenChanged: " & objComputer.whenChanged
-WScript.Echo "DistinguishedName: " & objComputer.distinguishedName
-Wscript.Echo "OU = " & arrMainOU(1)
+WScript.Echo "Computer.Name: " & objComputer.name
+WScript.Echo "Computer.cn: " & objComputer.cn
+WScript.Echo "Computer.DNSHostName: " & objComputer.DNSHostName
+WScript.Echo "Computer.OperatingSystem: " & objComputer.operatingSystem
+WScript.Echo "Computer.ServicePack: " & objComputer.operatingSystemServicePack
+WScript.Echo "Computer.SAMAccountName: " & objComputer.sAMAccountName
+WScript.Echo "Computer.Location: " & objComputer.location
+WScript.Echo "Computer.UserAccountControl: " & objComputer.userAccountControl
+WScript.Echo "Computer.PrimaryGroupID: " & objComputer.primaryGroupID
+WScript.Echo "Computer.WhenCreated: " & objComputer.whenCreated
+WScript.Echo "Computer.WhenChanged: " & objComputer.whenChanged
+WScript.Echo "Computer.DistinguishedName: " & objComputer.distinguishedName
+Wscript.Echo "Computer.OU: " & arrMainOU(1)
