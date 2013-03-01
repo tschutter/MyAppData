@@ -23,7 +23,13 @@ arrMainOU = Split(arrOUs(0), "=")
 
 WScript.Echo "Name: " & objComputer.name
 WScript.Echo "cn: " & objComputer.cn
-WScript.Echo "DNSHostName: " & objComputer.dNSHostName
+WScript.Echo "ComputerName: " & objComputer.ComputerName
+WScript.Echo "SiteName: " & objComputer.SiteName
+WScript.Echo "DNSHostName: " & objComputer.DNSHostName
+WScript.Echo "DomainShortName: " & objComputer.DomainShortName
+WScript.Echo "DomainDNSName: " & objComputer.DomainDNSName
+WScript.Echo "ForestDNSName: " & objComputer.ForestDNSName
+
 WScript.Echo "OperatingSystem: " & objComputer.operatingSystem
 WScript.Echo "ServicePack: " & objComputer.operatingSystemServicePack
 WScript.Echo "SAMAccountName: " & objComputer.sAMAccountName
