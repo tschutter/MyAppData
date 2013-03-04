@@ -1,2 +1,3 @@
 @echo off
-cscript //i //nologo windows_info.vbs
+cscript //i //nologo %~dp0\windows_info.vbs
+pause
