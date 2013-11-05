@@ -1,6 +1,15 @@
 rem cygwin_setup.bat configuration.
+
+rem Select 32 bit or 64 bit installer.
+set _SETUP_EXE=setup-x86.exe
+
+rem Package list.
 set _PACKAGES=cron,diffutils,inetutils,ncurses,netcat,openssh,p7zip,procps,python,rsync,screen,unzip,vim,zip,w3m
+
+rem Root directory of installation.
 set _ROOTDIR=C:\cygwin
+
+rem Mirror site.
 set _SITE=http://mirrors.kernel.org/sourceware/cygwin
 
 rem Enable logging of sshd and it's ilk to /var/log.

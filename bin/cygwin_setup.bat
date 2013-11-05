@@ -6,9 +6,9 @@ rem Features of this batch file:
 rem   * Mostly hands-free, except for stopping of running Cygwin
 rem     processes and configuration of newly installed services.
 rem   * Stops and starts Cygwin services.
-rem   * Lists running Cygwin processes (setup.exe informs you that
-rem     they are running, but does not list them).
-rem   * Fetches latest setup.exe from cygwin.com.
+rem   * Lists running Cygwin processes (setup-PLATFORM.exe informs you
+rem     that they are running, but does not list them).
+rem   * Fetches latest setup-PLATFORM.exe from cygwin.com.
 rem   * Installs standard set of packages.
 rem   * Updates all installed packages.
 rem   * Runs rebaseall.
@@ -100,7 +100,7 @@ exit /b 0
 
 
 :check_for_wget_exe
-    rem wget.exe is used to fetch setup.exe
+    rem wget.exe is used to fetch setup-PLATFORM.exe
     if exist wget.exe exit /b 0
     for /f %%i in ("wget.exe") do if not "%%~$PATH:i" == "" exit /b 0
     echo %_PREFIX% ERROR: wget.exe not found in PATH
@@ -166,30 +166,30 @@ exit /b 0
 
 
 :get_setup_exe
-    rem Download latest setup.exe.
+    rem Download latest setup-PLATFORM.exe.
     if not exist %_ROOTDIR% (
         echo %_PREFIX% Creating %_ROOTDIR%
         mkdir "%_ROOTDIR%"
     )
-    echo %_PREFIX% Fetching latest setup.exe from cygwin.com
-    wget --quiet -O "%_ROOTDIR%\setup.exe" http://cygwin.com/setup.exe
+    echo %_PREFIX% Fetching latest %_SETUP_EXE% from cygwin.com
+    wget --quiet -O "%_ROOTDIR%\%_SETUP_EXE%" http://cygwin.com/%_SETUP_EXE%
 goto :eof
 
 
 :setup
-    rem Run setup.exe.
-    echo %_PREFIX% Running setup.exe for updates
-    "%_ROOTDIR%\setup.exe" --site %_SITE% --quiet-mode --no-shortcuts --root "%_ROOTDIR%" --local-package-dir "%_ROOTDIR%\LocalPackageDir"
-    echo %_PREFIX% Running setup.exe to install standard package set
-    "%_ROOTDIR%\setup.exe" --site %_SITE% --quiet-mode --no-shortcuts --root "%_ROOTDIR%" --local-package-dir "%_ROOTDIR%\LocalPackageDir" --packages %_PACKAGES%
+    rem Run setup-PLATFORM.exe.
+    echo %_PREFIX% Running %_SETUP_EXE% for updates
+    "%_ROOTDIR%\%_SETUP_EXE%" --site %_SITE% --quiet-mode --no-shortcuts --root "%_ROOTDIR%" --local-package-dir "%_ROOTDIR%\LocalPackageDir"
+    echo %_PREFIX% Running %_SETUP_EXE% to install standard package set
+    "%_ROOTDIR%\%_SETUP_EXE%" --site %_SITE% --quiet-mode --no-shortcuts --root "%_ROOTDIR%" --local-package-dir "%_ROOTDIR%\LocalPackageDir" --packages %_PACKAGES%
 goto :eof
 
 
 :rebaseall
     rem Run rebaseall.
-    rem This should be handled by setup.exe, but at this time
-    rem setup.exe does not handle all cases.  And running rebaseall
-    rem unnecessarily should cause no harm.
+    rem This should be handled by setup-PLATFORM.exe, but at this time
+    rem setup-PLATFORM.exe does not handle all cases.  And running
+    rem rebaseall unnecessarily should cause no harm.
     rem See http://cygwin.com/ml/cygwin/2012-08/msg00320.html
     echo %_PREFIX% Running rebaseall
     "%_ROOTDIR%\bin\dash.exe" -c 'cd /usr/bin; PATH=. ; rebaseall'
