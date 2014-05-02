@@ -12,8 +12,7 @@ Initial checkout::
     git init
     git remote add origin https://github.com/tschutter/AppData.git
     git fetch
-    git branch master origin/master (probably optional)
-    git checkout master
+    git checkout -t master
     git submodule update --init --recursive
     bin\windows_config
 
@@ -33,3 +32,10 @@ To create a distribution zipfile on Linux::
         .emacs.d/elisp/yasnippet/extras/bundles/html-tmbundle/.git\*\
         .emacs.d/elisp/yasnippet/extras/bundles/rails-tmbundle/.git\*\
         .emacs.d/elisp/yasnippet/extras/bundles/ruby-tmbundle/.git\*
+
+TODO
+----
+
+* Win7 do not merge toolbar icons.
+
+* Do not hide unused tooltray icons.
