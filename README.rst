@@ -12,7 +12,7 @@ Initial checkout::
     git init
     git remote add origin https://github.com/tschutter/AppData.git
     git fetch
-    git checkout -t master
+    git checkout --track origin/master
     git submodule update --init --recursive
     bin\windows_config
 
