@@ -2,6 +2,15 @@
 rem
 rem Directory tree grep
 rem
+rem What is the point of tgrep?  Why not just use findstr /s?  The
+rem advantages of tgrep are:
+rem   tgrep can constrain the search to filename wildcards like "*.h".
+rem   tgrep has much simpler help (--help) for useful options.
+rem   You don't need to remember the findstr options.
+rem   tgrep skips binary files.
+rem   tgrep is consistent over multiple platforms
+rem     (see homefiles/bin/tgrep.bat).
+rem
 
 setlocal
 
