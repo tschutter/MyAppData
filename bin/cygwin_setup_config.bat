@@ -1,10 +1,10 @@
 rem cygwin_setup.bat configuration.
 
-rem Select 32 bit or 64 bit installer.
-set _SETUP_EXE=setup-x86.exe
+rem Select 32-bit or 64-bit installer.
+set _SETUP_EXE=setup-x86_64.exe
 
 rem Package list.
-set _PACKAGES=cron,diffutils,inetutils,ncurses,netcat,openssh,p7zip,procps,python,python3,rsync,screen,unzip,vim,zip,w3m
+set _PACKAGES=cron,diffutils,git,inetutils,ncurses,netcat,openssh,p7zip,procps,python,python3,rsync,screen,unzip,vim,zip,w3m
 
 rem Root directory of installation.
 set _ROOTDIR=C:\cygwin
