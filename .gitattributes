@@ -1,0 +1,16 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Files that will always have CRLF line endings on checkout.  All text
+# files are included here to handle case of using Cygwin git to
+# checkout this repository.
+*.bat text eol=crlf
+*.ini text eol=crlf
+*.py text eol=crlf
+*.rst text eol=crlf
+*.txt text eol=crlf
+*.vbs text eol=crlf
+
+# Binary files.
+*.exe binary
+*.jpg binary
