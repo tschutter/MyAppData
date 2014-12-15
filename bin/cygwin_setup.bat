@@ -12,7 +12,7 @@ rem   * Fetches latest setup-PLATFORM.exe from cygwin.com.
 rem   * Installs standard set of packages.
 rem   * Updates all installed packages.
 rem   * Runs rebaseall.
-rem   * Installs standard services (syslogd, sshd).
+rem   * Installs standard services (syslog-ng, sshd).
 rem   * Installs cyglsa.
 rem
 rem Copyright (c) 2012 Tom Schutter
@@ -55,7 +55,7 @@ goto :main
     set _PACKAGES=
     set _ROOTDIR=
     set _SITE=
-    set _CONFIG_SYSLOGD=
+    set _CONFIG_SYSLOG_NG=
     set _CONFIG_SSHD=
     set _CONFIG_LSA=
     call "%_CONFFILE%"
@@ -71,8 +71,8 @@ goto :main
         echo %_PREFIX% ERROR: _SITE not defined in "%_CONFFILE%"
         exit /b 1
     )
-    if "%_CONFIG_SYSLOGD%" == "" (
-        echo %_PREFIX% ERROR: _CONFIG_SYSLOGD not defined in "%_CONFFILE%"
+    if "%_CONFIG_SYSLOG_NG%" == "" (
+        echo %_PREFIX% ERROR: _CONFIG_SYSLOG_NG not defined in "%_CONFFILE%"
         exit /b 1
     )
     if "%_CONFIG_SSHD%" == "" (
@@ -128,13 +128,13 @@ goto :eof
 :start_services
     rem Start all Cygwin services.
 
-    rem Start syslogd first.
+    rem Start syslog-ng first.
     for /f "usebackq" %%s in (`"%_ROOTDIR%\bin\cygrunsrv.exe" --list`) do (
-        if "%%s" == "syslogd" call :start_service %%s
+        if "%%s" == "syslog-ng" call :start_service %%s
     )
     rem Start rest of services.
     for /f "usebackq" %%s in (`"%_ROOTDIR%\bin\cygrunsrv.exe" --list`) do (
-        if not "%%s" == "syslogd" call :start_service %%s
+        if not "%%s" == "syslog-ng" call :start_service %%s
     )
 goto :eof
 
@@ -209,16 +209,16 @@ goto :eof
 goto :eof
 
 
-:config_syslogd
-    sc query syslogd | findstr "service does not exist" > NUL:
+:config_syslog_ng
+    sc query syslog-ng | findstr "service does not exist" > NUL:
     if ERRORLEVEL 1 goto :eof
 
-    echo %_PREFIX% Configuring syslogd
-    if not exist "%_ROOTDIR%\bin\syslogd-config" (
-        echo %_PREFIX% ERROR: inetutils not installed
+    echo %_PREFIX% Configuring syslog-ng
+    if not exist "%_ROOTDIR%\bin\syslog-ng-config" (
+        echo %_PREFIX% ERROR: syslog-ng not installed
         goto :eof
     )
-    "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/syslogd-config"
+    "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/syslog-ng-config --yes"
 goto :eof
 
 
@@ -264,7 +264,7 @@ goto :eof
     call :setup
     call :rebaseall
     call :create_passwd
-    if "%_CONFIG_SYSLOGD%" == "True" call :config_syslogd
+    if "%_CONFIG_SYSLOG_NG%" == "True" call :config_syslog_ng
     if "%_CONFIG_SSHD%" == "True" call :config_sshd
     call :start_services
     rem Do config_lsa last so that reboot message is last
