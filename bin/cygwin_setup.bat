@@ -148,7 +148,7 @@ goto :eof
         "%_ROOTDIR%\bin\ps.exe" -l | findstr /v /c:"/usr/bin/ps" > "%_TEMPFILE%"
         findstr /v /r /c:"PID.*COMMAND" "%_TEMPFILE%" | findstr /r /c:"^..*" > NUL:
         if ERRORLEVEL 1 goto :ignore
-        echo %_PREFIX% Found running Cygwin processes
+        echo %_PREFIX% Found running Cygwin processes using: "%_ROOTDIR%\bin\ps.exe" -l
         type "%_TEMPFILE%"
         del "%_TEMPFILE%"
         :ask_abort_retry_ignore
