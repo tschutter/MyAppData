@@ -23,9 +23,10 @@ set _ARG_=%1
 goto :main
 
 :usage
-    echo USAGE: which FILENAME
+    echo USAGE: which [-a] FILENAME
     echo        Searches the directories listed in the PATH environment
     echo        variable for FILENAME.
+    echo   -a = Print all located files, not just the first
 goto :eof
 
 :check_file
@@ -37,6 +38,11 @@ goto :eof
 
 :check_pathext
     set _BASENAME_=%*
+
+    rem If extension already given, such as .dll.
+    call :check_file %_BASENAME_%
+    if "%_ALL_%"=="False" if "%_FOUND_%"=="True" goto :eof
+
     set _PATHEXT_=%PATHEXT%
     :check_pathext_loop
         for /f "delims=; tokens=1*" %%i in ("%_PATHEXT_%") do (set _EXT_=%%i&set _PATHEXT_=%%j)
