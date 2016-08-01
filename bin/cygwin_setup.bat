@@ -196,19 +196,6 @@ goto :eof
 goto :eof
 
 
-:create_passwd
-    rem Create local passwd and group files.
-    if not exist "%_ROOTDIR%\etc\passwd" (
-        echo %_PREFIX% Creating /etc/passwd
-        "%_ROOTDIR%\bin\bash.exe" --login -i -c '/usr/bin/mkpasswd --local > /etc/passwd'
-    )
-    if not exist "%_ROOTDIR%\etc\group" (
-        echo %_PREFIX% Creating /etc/group
-        "%_ROOTDIR%\bin\bash.exe" --login -i -c '/usr/bin/mkgroup --local > /etc/group'
-    )
-goto :eof
-
-
 :config_syslog_ng
     sc query syslog-ng | findstr "service does not exist" > NUL:
     if ERRORLEVEL 1 goto :eof
@@ -229,11 +216,6 @@ goto :eof
     echo %_PREFIX% Configuring sshd
     if not exist "%_ROOTDIR%\bin\ssh-host-config" (
         echo %_PREFIX% ERROR: opensshd not installed
-        goto :eof
-    )
-    findstr /r "^sshd:" "%_ROOTDIR%\etc\passwd"
-    if not ERRORLEVEL 1 (
-        echo %_PREFIX% ERROR: sshd account found in /etc/passwd
         goto :eof
     )
     "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/ssh-host-config"
@@ -263,7 +245,6 @@ goto :eof
     call :get_setup_exe
     call :setup
     call :rebaseall
-    call :create_passwd
     if "%_CONFIG_SYSLOG_NG%" == "True" call :config_syslog_ng
     if "%_CONFIG_SSHD%" == "True" call :config_sshd
     call :start_services
