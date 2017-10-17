@@ -4,7 +4,7 @@ rem Select 32-bit or 64-bit installer.
 set _SETUP_EXE=setup-x86_64.exe
 
 rem Package list.
-set _PACKAGES=bc,cron,diffutils,dos2unix,git,nc,ncurses,openssh,p7zip,procps,python,python3,rsync,screen,ssmtp,syslog-ng,tmux,unzip,vim,w3m,wget,zip
+set _PACKAGES=bc,cron,diffutils,dos2unix,git,nc,ncurses,openssh,p7zip,pip,pip3,procps,python,python3,rsync,screen,ssmtp,syslog-ng,tmux,unzip,vim,w3m,wget,zip
 
 rem Root directory of installation.
 set _ROOTDIR=C:\cygwin64
