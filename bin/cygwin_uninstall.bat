@@ -37,13 +37,25 @@ rem
 
 setlocal
 
-rem Configuration.
-set _ROOTDIR=C:\cygwin
-
 rem Global constants.
 set _PREFIX=CYGWIN_UNINSTALL:
 
 goto :main
+
+:load_config
+    set _CONFFILE=%~dp0\cygwin_setup_config.bat
+    if exist "%_CONFFILE%" goto :endif_check_conffile
+        echo %_PREFIX% ERROR: Configuration file "%_CONFFILE%" not found.
+        exit /b 1
+    :endif_check_conffile
+    set _ROOTDIR=
+    call "%_CONFFILE%"
+    if "%_ROOTDIR%" == "" (
+        echo %_PREFIX% ERROR: _ROOTDIR not defined in "%_CONFFILE%"
+        exit /b 1
+    )
+exit /b 0
+
 
 :check_rootdir
     rem Return 1 if _ROOTDIR is not a Cygwin root directory, 0 otherwise.
@@ -196,6 +208,7 @@ goto :eof
 
 
 :main
+    call :load_config ||exit /b 1
     call :check_rootdir ||exit /b 1
     call :check_admin ||exit /b 1
     call :remove_local_cygwin_users
