@@ -191,7 +191,7 @@ exit /b 0
         goto :remove_local_user_ask
     :remove_local_user_ask_done
     echo %_PREFIX% Removing local user "%1"
-    net user %1 /remove
+    net user %1 /delete
 goto :eof
 
 
@@ -219,4 +219,4 @@ goto :eof
     call :clean_registry
     call :remove_cygwin_dir
     call :remove_shortcuts
-    call :remove_local_users
+    call :remove_local_cygwin_users
