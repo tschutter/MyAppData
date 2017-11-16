@@ -221,6 +221,36 @@ goto :eof
     "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/ssh-host-config"
     echo %_PREFIX% Disabling reverse DNS lookup by sshd
     "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/sed -i -e 's/#UseDNS yes/UseDNS no/' /etc/sshd_config"
+    echo %_PREFIX% Delaying sshd start until after Cygserver has started
+    sc config sshd depend= tcpip/cygserver
+goto :eof
+
+
+:config_cygserver
+    sc query cygserver | findstr "service does not exist" > NUL:
+    if ERRORLEVEL 1 goto :eof
+
+    echo %_PREFIX% Configuring cygserver
+    if not exist "%_ROOTDIR%\bin\cygserver-config" (
+        echo %_PREFIX% ERROR: cygserver not installed
+        goto :eof
+    )
+    "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/cygserver-config --yes"
+    echo %_PREFIX% Delaying cygserver start until after TCPIP and AFD have started
+    sc config cygserver depend= tcpip/afd
+goto :eof
+
+
+:config_cron
+    sc query cron | findstr "service does not exist" > NUL:
+    if ERRORLEVEL 1 goto :eof
+
+    echo %_PREFIX% Configuring cron
+    if not exist "%_ROOTDIR%\bin\cron-config" (
+        echo %_PREFIX% ERROR: cron not installed
+        goto :eof
+    )
+    "%_ROOTDIR%\bin\bash.exe" --login -i -c "/usr/bin/cron-config"
 goto :eof
 
 
@@ -245,8 +275,10 @@ goto :eof
     call :get_setup_exe
     call :setup
     call :rebaseall
+    call :config_cygserver
     if "%_CONFIG_SYSLOG_NG%" == "True" call :config_syslog_ng
     if "%_CONFIG_SSHD%" == "True" call :config_sshd
+    if "%_CONFIG_CRON%" == "True" call :config_cron
     call :start_services
     rem Do config_lsa last so that reboot message is last
     if "%_CONFIG_LSA%" == "True" call :config_lsa
