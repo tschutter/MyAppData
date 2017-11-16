@@ -21,9 +21,6 @@ set _CONFIG_SSHD=True
 rem Enable cron daemon.
 set _CONFIG_CRON=True
 
-rem Enable rsync daemon.
-set _CONFIG_RSYNC=True
-
 rem Enable LSA authentication.
 rem See http://cygwin.com/cygwin-ug-net/ntsec.html
 set _CONFIG_LSA=True
