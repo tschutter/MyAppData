@@ -1,10 +1,11 @@
-"""
-Search Windows registry keys, values, and data for a particular string.
-"""
+#!/usr/bin/env python3
+
+"""Search Windows registry keys, values, and data for a particular string."""
+
+import argparse
+import sys
 
 import _winreg
-import optparse
-import sys
 
 # Hive name -> hive handle map
 HIVE_ABBR = {
@@ -35,6 +36,9 @@ HIVE_NAME = {
 
 def registry_value_to_string(value, value_type):
     """Convert a registry value to a string."""
+
+    # pylint: disable=too-many-branches,too-many-return-statements
+
     if value_type == _winreg.REG_SZ:
         return value
 
@@ -42,31 +46,31 @@ def registry_value_to_string(value, value_type):
         return value
 
     if value_type == _winreg.REG_DWORD:
-        return ("%d" % value)
+        return f"{value}"
 
     if value_type == _winreg.REG_DWORD_LITTLE_ENDIAN:
-        r = 0
-        s = 0
-        for ch in value:
-            r |= (ord(ch) << s)
-            s += 8
+        result = 0
+        shift = 0
+        for char in value:
+            result |= (ord(char) << shift)
+            shift += 8
 
-        return ("%d" % r)
+        return f"{result}"
 
     if value_type == _winreg.REG_DWORD_BIG_ENDIAN:
-        r = 0
-        s = 8 * 3
-        for ch in value:
-            r |= (ord(ch) << s)
-            s -= 8
+        result = 0
+        shift = 8 * 3
+        for char in value:
+            result |= (ord(char) << shift)
+            shift -= 8
 
-        return ("0x%08x" % r)
+        return f"{result:#010x}"
 
     if value_type == _winreg.REG_BINARY:
-        r = ""
-        for ch in value:
-            r += ("%02x " % ord(ch))
-        return r
+        result = ""
+        for char in value:
+            result += f"char:02x"
+        return result
 
     # punt:
 
@@ -85,48 +89,53 @@ def registry_value_to_string(value, value_type):
     return "Unknown"
 
 
-def search(options, key_name_stack, key, key_name, search_string):
+def search(args, key_name_stack, key, key_name, pattern):
     """Search a subtree."""
+
+    # pylint: disable=too-many-branches
+
     key_name_stack.append(key_name)
 
-    if options.search_keys:
-        if options.ignoreCase:
+    if args.search_keys:
+        if args.ignore_case:
             key_name = key_name.lower()
-        if key_name.find(search_string) != -1:
-            print "\\".join(key_name_stack)
+        if key_name.find(pattern) != -1:
+            print("\\".join(key_name_stack))
 
-    if options.search_values or options.search_data:
-        for loop in xrange(sys.maxint):
+    if args.search_values or args.search_data:
+        for loop in range(sys.maxsize):
             try:
                 value_name, value_data, value_type = _winreg.EnumValue(
-                  key,
-                  loop
+                    key,
+                    loop
                 )
                 value_data = registry_value_to_string(value_data, value_type)
                 found = False
 
-                if options.search_values:
-                    if options.ignoreCase:
+                if args.search_values:
+                    if args.ignore_case:
                         value_name = value_name.lower()
-                    if value_name.find(search_string) != -1:
+                    if value_name.find(pattern) != -1:
                         found = True
 
-                if options.search_data:
-                    if options.ignoreCase:
+                if args.search_data:
+                    if args.ignore_case:
                         value_data = value_data.lower()
-                    if value_data.find(search_string) != -1:
+                    if value_data.find(pattern) != -1:
                         found = True
 
                 if found:
-                    if options.key_values_with_matches:
-                        print "\\".join(key_name_stack) + "\\" + value_name
+                    if args.key_values_with_matches:
+                        print("\\".join(key_name_stack) + "\\" + value_name)
                     else:
-                        print "\\".join(key_name_stack) + "\\" + value_name + \
-                              " = " + value_data
+                        print(
+                            "\\".join(key_name_stack) + "\\" + value_name +
+                            " = " + value_data
+                        )
             except Exception:
                 break
 
-    for loop in xrange(sys.maxint):
+    for loop in range(sys.maxsize):
         try:
             subkey_name = _winreg.EnumKey(key, loop)
         except Exception:
@@ -134,7 +143,7 @@ def search(options, key_name_stack, key, key_name, search_string):
 
         try:
             subkey = _winreg.OpenKey(key, subkey_name)
-            search(options, [], subkey, subkey_name, search_string)
+            search(args, [], subkey, subkey_name, pattern)
         except Exception:
             pass
 
@@ -146,27 +155,27 @@ def search(options, key_name_stack, key, key_name, search_string):
     key_name_stack.pop()
 
 
-def search_root(options, root, search_string):
+def search_root(args, root, pattern):
     """Search beginning at a hive root."""
-    search(options, [], root, HIVE_NAME[root], search_string)
+    search(args, [], root, HIVE_NAME[root], pattern)
 
 
 def main():
-    """main"""
-    option_parser = optparse.OptionParser(
-        usage="usage: %prog [options] PATTERN [STARTKEY]\n" +
-        "  If none of -k, -v, -d is specified, then all will be searched.\n" +
-        "  STARTKEY must begin with HKCR, HKCU, HKLM, HKU, HKCC, or HKDD."
+    """Main."""
+
+    arg_parser = argparse.ArgumentParser(
+        description="Search the registry.",
+        epilog="If none of -k, -v, -d is specified, then all will be searched."
     )
-    option_parser.add_option(
+    arg_parser.add_argument(
         "-i",
         "--ignore-case",
         action="store_true",
-        dest="ignoreCase",
+        dest="ignore_case",
         default=False,
         help="ignore case"
     )
-    option_parser.add_option(
+    arg_parser.add_argument(
         "-k",
         "--search-keys",
         action="store_true",
@@ -174,7 +183,7 @@ def main():
         default=False,
         help="search keys"
     )
-    option_parser.add_option(
+    arg_parser.add_argument(
         "-v",
         "--search-values",
         action="store_true",
@@ -182,7 +191,7 @@ def main():
         default=False,
         help="search values"
     )
-    option_parser.add_option(
+    arg_parser.add_argument(
         "-d",
         "--search-data",
         action="store_true",
@@ -190,7 +199,7 @@ def main():
         default=False,
         help="search data"
     )
-    option_parser.add_option(
+    arg_parser.add_argument(
         "-l",
         "--key-values-with-matches",
         action="store_true",
@@ -198,47 +207,44 @@ def main():
         default=False,
         help="print matching key/value, do not print data"
     )
+    arg_parser.add_argument(
+        "pattern",
+        help="string to search for"
+    )
+    arg_parser.add_argument(
+        "startkey",
+        nargs="?",
+        default=None,
+        help=(
+            "tree to search in;"
+            " must begin with HKCR, HKCU, HKLM, HKU, HKCC, or HKDD"
+        )
+    )
 
-    (options, args) = option_parser.parse_args()
+    args = arg_parser.parse_args()
 
-    # If no search flag is specified, search everything.
+    # If no search flag is specified, then search everything.
     if not (
-        options.search_keys or options.search_values or options.search_data
+        args.search_keys or args.search_values or args.search_data
     ):
-        options.search_keys = True
-        options.search_values = True
-        options.search_data = True
-
-    # Check the number of arguments.
-    if len(args) == 0:
-        option_parser.error("PATTERN not specified")
-        return 1
-    elif len(args) > 2:
-        option_parser.error("unknown argument")
-        return 1
+        args.search_keys = True
+        args.search_values = True
+        args.search_data = True
 
     # Get the search pattern.
-    search_string = args[0]
-    if options.ignoreCase:
-        search_string = search_string.lower()
+    pattern = args.pattern
+    if args.ignore_case:
+        pattern = pattern.lower()
 
-    if len(args) == 1:
-        search_root(options, _winreg.HKEY_CLASSES_ROOT, search_string)
-        search_root(options, _winreg.HKEY_CURRENT_USER, search_string)
-        search_root(options, _winreg.HKEY_LOCAL_MACHINE, search_string)
-        search_root(options, _winreg.HKEY_USERS, search_string)
-        search_root(options, _winreg.HKEY_CURRENT_CONFIG, search_string)
-        search_root(options, _winreg.HKEY_DYN_DATA, search_string)
-
-    else:
+    if args.startkey:
         # Split the keyname at the first \
-        hkey_and_subkey = args[1].split("\\", 1)
+        hkey_and_subkey = args.startkey.split("\\", 1)
 
         # Map the hive name to a hive handle
         try:
             root = HIVE_ABBR[hkey_and_subkey[0]]
         except Exception:
-            option_parser.error(
+            arg_parser.error(
                 "unknown HKEY, use HKCR, HKCU, HKLM, HKU, HKCC, or HKDD"
             )
             return 1
@@ -246,14 +252,21 @@ def main():
         if len(hkey_and_subkey) == 2:
             try:
                 key = _winreg.OpenKey(root, hkey_and_subkey[1])
-                search(options, [], key, sys.argv[2], search_string)
+                search(args, [], key, sys.argv[2], pattern)
                 _winreg.CloseKey(key)
             except Exception:
                 # Be quiet if the starting key does not exist
                 return 0
 
         else:
-            search_root(options, root, search_string)
+            search_root(args, root, pattern)
+    else:
+        search_root(args, _winreg.HKEY_CLASSES_ROOT, pattern)
+        search_root(args, _winreg.HKEY_CURRENT_USER, pattern)
+        search_root(args, _winreg.HKEY_LOCAL_MACHINE, pattern)
+        search_root(args, _winreg.HKEY_USERS, pattern)
+        search_root(args, _winreg.HKEY_CURRENT_CONFIG, pattern)
+        search_root(args, _winreg.HKEY_DYN_DATA, pattern)
 
     return 0
 
