@@ -1,5 +1,5 @@
-AppData
-=======
+MyAppData
+=========
 
 Windows dotfiles.
 
@@ -9,21 +9,20 @@ Usage
 Initial checkout::
 
     cd %AppData%
-    git init
-    git remote add origin https://github.com/tschutter/AppData.git
-    git fetch
-    git checkout --track origin/master
-    bin\windows_config
+    git clone git@github.com:tschutter/MyAppData.git
+    MyAppData\bin\windows_config
 
 Update::
 
-    cd %AppData%
+    cd %AppData%\MyAppData
     git pull
     windows_config
 
-To create a distribution zipfile on Linux::
+To create a distribution zipfile on Linux for use on Windows machines
+without git::
 
-    zip -r /tmp/AppData.zip . --exclude .git\*
+    cd MyAppData/..
+    zip -r /tmp/MyAppData.zip MyAppData --exclude .git\*
 
 TODO
 ----
