@@ -5,32 +5,32 @@
 import argparse
 import sys
 
-import _winreg
+import winreg
 
 # Hive name -> hive handle map
 HIVE_ABBR = {
-    "HKCR": _winreg.HKEY_CLASSES_ROOT,
-    "HKCU": _winreg.HKEY_CURRENT_USER,
-    "HKLM": _winreg.HKEY_LOCAL_MACHINE,
-    "HKU": _winreg.HKEY_USERS,
-    "HKCC": _winreg.HKEY_CURRENT_CONFIG,
-    "HKDD": _winreg.HKEY_DYN_DATA,
-    "HKEY_CLASSES_ROOT": _winreg.HKEY_CLASSES_ROOT,
-    "HKEY_CURRENT_USER": _winreg.HKEY_CURRENT_USER,
-    "HKEY_LOCAL_MACHINE": _winreg.HKEY_LOCAL_MACHINE,
-    "HKEY_USERS": _winreg.HKEY_USERS,
-    "HKEY_CURRENT_CONFIG": _winreg.HKEY_CURRENT_CONFIG,
-    "HKEY_DYN_DATA": _winreg.HKEY_DYN_DATA
+    "HKCR": winreg.HKEY_CLASSES_ROOT,
+    "HKCU": winreg.HKEY_CURRENT_USER,
+    "HKLM": winreg.HKEY_LOCAL_MACHINE,
+    "HKU": winreg.HKEY_USERS,
+    "HKCC": winreg.HKEY_CURRENT_CONFIG,
+    "HKDD": winreg.HKEY_DYN_DATA,
+    "HKEY_CLASSES_ROOT": winreg.HKEY_CLASSES_ROOT,
+    "HKEY_CURRENT_USER": winreg.HKEY_CURRENT_USER,
+    "HKEY_LOCAL_MACHINE": winreg.HKEY_LOCAL_MACHINE,
+    "HKEY_USERS": winreg.HKEY_USERS,
+    "HKEY_CURRENT_CONFIG": winreg.HKEY_CURRENT_CONFIG,
+    "HKEY_DYN_DATA": winreg.HKEY_DYN_DATA
 }
 
 # Hive handle -> hive name map
 HIVE_NAME = {
-    _winreg.HKEY_CLASSES_ROOT: "HKEY_CLASSES_ROOT",
-    _winreg.HKEY_CURRENT_USER: "HKEY_CURRENT_USER",
-    _winreg.HKEY_LOCAL_MACHINE: "HKEY_LOCAL_MACHINE",
-    _winreg.HKEY_USERS: "HKEY_USERS",
-    _winreg.HKEY_CURRENT_CONFIG: "HKEY_CURRENT_CONFIG",
-    _winreg.HKEY_DYN_DATA: "HKEY_DYN_DATA"
+    winreg.HKEY_CLASSES_ROOT: "HKEY_CLASSES_ROOT",
+    winreg.HKEY_CURRENT_USER: "HKEY_CURRENT_USER",
+    winreg.HKEY_LOCAL_MACHINE: "HKEY_LOCAL_MACHINE",
+    winreg.HKEY_USERS: "HKEY_USERS",
+    winreg.HKEY_CURRENT_CONFIG: "HKEY_CURRENT_CONFIG",
+    winreg.HKEY_DYN_DATA: "HKEY_DYN_DATA"
 }
 
 
@@ -39,16 +39,16 @@ def registry_value_to_string(value, value_type):
 
     # pylint: disable=too-many-branches,too-many-return-statements
 
-    if value_type == _winreg.REG_SZ:
+    if value_type == winreg.REG_SZ:
         return value
 
-    if value_type == _winreg.REG_EXPAND_SZ:
+    if value_type == winreg.REG_EXPAND_SZ:
         return value
 
-    if value_type == _winreg.REG_DWORD:
+    if value_type == winreg.REG_DWORD:
         return f"{value}"
 
-    if value_type == _winreg.REG_DWORD_LITTLE_ENDIAN:
+    if value_type == winreg.REG_DWORD_LITTLE_ENDIAN:
         result = 0
         shift = 0
         for char in value:
@@ -57,7 +57,7 @@ def registry_value_to_string(value, value_type):
 
         return f"{result}"
 
-    if value_type == _winreg.REG_DWORD_BIG_ENDIAN:
+    if value_type == winreg.REG_DWORD_BIG_ENDIAN:
         result = 0
         shift = 8 * 3
         for char in value:
@@ -66,7 +66,7 @@ def registry_value_to_string(value, value_type):
 
         return f"{result:#010x}"
 
-    if value_type == _winreg.REG_BINARY:
+    if value_type == winreg.REG_BINARY:
         result = ""
         for char in value:
             result += f"char:02x"
@@ -74,16 +74,16 @@ def registry_value_to_string(value, value_type):
 
     # punt:
 
-    if value_type == _winreg.REG_LINK:
+    if value_type == winreg.REG_LINK:
         return "<<REG_LINK>>"
 
-    if value_type == _winreg.REG_MULTI_SZ:
+    if value_type == winreg.REG_MULTI_SZ:
         return "<<REG_MULTI_SZ>>"
 
-    if value_type == _winreg.REG_RESOURCE_LIST:
+    if value_type == winreg.REG_RESOURCE_LIST:
         return "<<REG_RESOURCE_LIST>>"
 
-    if value_type == _winreg.REG_FULL_RESOURCE_DESCRIPTOR:
+    if value_type == winreg.REG_FULL_RESOURCE_DESCRIPTOR:
         return "<<REG_FULL_RESOURCE_DESCRIPTOR>>"
 
     return "Unknown"
@@ -105,7 +105,7 @@ def search(args, key_name_stack, key, key_name, pattern):
     if args.search_values or args.search_data:
         for loop in range(sys.maxsize):
             try:
-                value_name, value_data, value_type = _winreg.EnumValue(
+                value_name, value_data, value_type = winreg.EnumValue(
                     key,
                     loop
                 )
@@ -137,18 +137,18 @@ def search(args, key_name_stack, key, key_name, pattern):
 
     for loop in range(sys.maxsize):
         try:
-            subkey_name = _winreg.EnumKey(key, loop)
-        except Exception:
+            subkey_name = winreg.EnumKey(key, loop)
+        except WindowsError:
             break
 
         try:
-            subkey = _winreg.OpenKey(key, subkey_name)
+            subkey = winreg.OpenKey(key, subkey_name)
             search(args, [], subkey, subkey_name, pattern)
         except Exception:
             pass
 
         try:
-            _winreg.CloseKey(subkey)
+            winreg.CloseKey(subkey)
         except Exception:
             pass
 
@@ -251,9 +251,9 @@ def main():
 
         if len(hkey_and_subkey) == 2:
             try:
-                key = _winreg.OpenKey(root, hkey_and_subkey[1])
+                key = winreg.OpenKey(root, hkey_and_subkey[1])
                 search(args, [], key, sys.argv[2], pattern)
-                _winreg.CloseKey(key)
+                winreg.CloseKey(key)
             except Exception:
                 # Be quiet if the starting key does not exist
                 return 0
@@ -261,12 +261,12 @@ def main():
         else:
             search_root(args, root, pattern)
     else:
-        search_root(args, _winreg.HKEY_CLASSES_ROOT, pattern)
-        search_root(args, _winreg.HKEY_CURRENT_USER, pattern)
-        search_root(args, _winreg.HKEY_LOCAL_MACHINE, pattern)
-        search_root(args, _winreg.HKEY_USERS, pattern)
-        search_root(args, _winreg.HKEY_CURRENT_CONFIG, pattern)
-        search_root(args, _winreg.HKEY_DYN_DATA, pattern)
+        search_root(args, winreg.HKEY_CLASSES_ROOT, pattern)
+        search_root(args, winreg.HKEY_CURRENT_USER, pattern)
+        search_root(args, winreg.HKEY_LOCAL_MACHINE, pattern)
+        search_root(args, winreg.HKEY_USERS, pattern)
+        search_root(args, winreg.HKEY_CURRENT_CONFIG, pattern)
+        search_root(args, winreg.HKEY_DYN_DATA, pattern)
 
     return 0
 

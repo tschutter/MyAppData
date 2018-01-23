@@ -15,7 +15,7 @@ if sys.platform != "win32":
     print("Only for Windows (not Cygwin)")
     sys.exit(1)
 
-import _winreg
+import winreg
 
 # pylint: disable=line-too-long
 
@@ -48,9 +48,9 @@ class Reg():
     def hive_key(hive_name):
         """Return the key constant for a hive_name."""
         hive_keys = {
-            "HKCR": _winreg.HKEY_CLASSES_ROOT,
-            "HKCU": _winreg.HKEY_CURRENT_USER,
-            "HKLM": _winreg.HKEY_LOCAL_MACHINE
+            "HKCR": winreg.HKEY_CLASSES_ROOT,
+            "HKCU": winreg.HKEY_CURRENT_USER,
+            "HKLM": winreg.HKEY_LOCAL_MACHINE
         }
         return hive_keys[hive_name]
 
@@ -68,18 +68,16 @@ class Reg():
 
         # Attempt to open the key.
         try:
-            key = _winreg.OpenKey(root_key, sub_key)
+            key = winreg.OpenKey(root_key, sub_key)
         except WindowsError:
             raise StopIteration
 
         index = 0
         while True:
             try:
-                yield _winreg.EnumKey(key, index)
-            except WindowsError as windows_error:
-                if windows_error[0] == 259:
-                    raise StopIteration
-                raise
+                yield winreg.EnumKey(key, index)
+            except WindowsError:
+                break
             index += 1
 
     def delete_key(self, key_path):
@@ -96,18 +94,18 @@ class Reg():
 
         # Attempt to open the key.
         try:
-            key = _winreg.OpenKey(root_key, sub_key, 0, _winreg.KEY_ALL_ACCESS)
+            key = winreg.OpenKey(root_key, sub_key, 0, winreg.KEY_ALL_ACCESS)
         except WindowsError:
             return
 
         # Close the key.
-        _winreg.CloseKey(key)
+        winreg.CloseKey(key)
 
         # Delete the key.
         if self.args.verbose:
             print(f"DeleteKey({key_name})")
         if not self.args.dryrun:
-            _winreg.DeleteKey(root_key, sub_key)
+            winreg.DeleteKey(root_key, sub_key)
 
     def delete_value(self, key_path):
         """Delete a value associated with a specified key."""
@@ -124,13 +122,13 @@ class Reg():
 
         # Attempt to open the key.
         try:
-            key = _winreg.OpenKey(root_key, sub_key, 0, _winreg.KEY_ALL_ACCESS)
+            key = winreg.OpenKey(root_key, sub_key, 0, winreg.KEY_ALL_ACCESS)
         except WindowsError:
             return
 
         # Attempt to get the current value.
         try:
-            _winreg.QueryValueEx(key, value_name)
+            winreg.QueryValueEx(key, value_name)
         except WindowsError:
             return
 
@@ -138,10 +136,10 @@ class Reg():
         if self.args.verbose:
             print(f"DeleteValue({key_name}\\{value_name}")
         if not self.args.dryrun:
-            _winreg.DeleteValue(key, value_name)
+            winreg.DeleteValue(key, value_name)
 
         # Close the key.
-        _winreg.CloseKey(key)
+        winreg.CloseKey(key)
 
     @staticmethod
     def get_value(key_path):
@@ -158,18 +156,18 @@ class Reg():
 
         # Attempt to open the key.
         try:
-            key = _winreg.OpenKey(root_key, sub_key, 0, _winreg.KEY_READ)
+            key = winreg.OpenKey(root_key, sub_key, 0, winreg.KEY_READ)
         except WindowsError:
             return None
 
         # Attempt to get the current value.
         try:
-            value, _ = _winreg.QueryValueEx(key, value_name)
+            value, _ = winreg.QueryValueEx(key, value_name)
         except WindowsError:
             value = None
 
         # Close the key.
-        _winreg.CloseKey(key)
+        winreg.CloseKey(key)
 
         return value
 
@@ -193,7 +191,7 @@ class Reg():
 
         # Attempt to open the key.
         try:
-            key = _winreg.OpenKey(root_key, sub_key, 0, _winreg.KEY_ALL_ACCESS)
+            key = winreg.OpenKey(root_key, sub_key, 0, winreg.KEY_ALL_ACCESS)
         except WindowsError:
             if not create_key:
                 return False
@@ -203,14 +201,14 @@ class Reg():
                     self.created_keys.append(key_name)
                 key = None
             if not self.args.dryrun:
-                key = _winreg.CreateKey(root_key, sub_key)
+                key = winreg.CreateKey(root_key, sub_key)
 
         # Attempt to get the current value.
         if key is None:
             orig_value = None
         else:
             try:
-                orig_value, _ = _winreg.QueryValueEx(key, value_name)
+                orig_value, _ = winreg.QueryValueEx(key, value_name)
             except WindowsError:
                 orig_value = None
 
@@ -218,7 +216,7 @@ class Reg():
         changed = value != orig_value
         if changed:
             if self.args.verbose:
-                if vtype == _winreg.REG_DWORD:
+                if vtype == winreg.REG_DWORD:
                     value_format = "{:#010x}"
                 else:
                     value_format = "{}"
@@ -232,7 +230,7 @@ class Reg():
                     f" was {orig_value_str}"
                 )
             if not self.args.dryrun:
-                _winreg.SetValueEx(
+                winreg.SetValueEx(
                     key,
                     value_name,
                     0,
@@ -241,7 +239,7 @@ class Reg():
                 )
 
         # Close the key.
-        _winreg.CloseKey(key)
+        winreg.CloseKey(key)
 
         return changed
 
@@ -249,7 +247,7 @@ class Reg():
         """Set a REG_DWORD value."""
         return self.set_value(
             key_path,
-            _winreg.REG_DWORD,
+            winreg.REG_DWORD,
             int(value),
             create_key
         )
@@ -258,7 +256,7 @@ class Reg():
         """Set a REG_SZ value."""
         return self.set_value(
             key_path,
-            _winreg.REG_SZ,
+            winreg.REG_SZ,
             str(value),
             create_key
         )
@@ -267,7 +265,7 @@ class Reg():
         """Set a REG_EXPAND_SZ value."""
         return self.set_value(
             key_path,
-            _winreg.REG_EXPAND_SZ,
+            winreg.REG_EXPAND_SZ,
             str(value),
             create_key
         )
@@ -279,7 +277,7 @@ def notify_explorer(message=None):
     _hwnd_broadcast = 0xFFFF
     _wm_settingchange = 0x001A
     _smto_abortifhung = 0x0002
-    result = ctypes.wintypes.DWORD()
+    result = ctypes.c_ulong()  # DWORD
     ctypes.windll.user32.SendMessageTimeoutA(
         _hwnd_broadcast,
         _wm_settingchange,
