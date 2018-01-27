@@ -446,9 +446,6 @@ def taskbar_config(reg):
     explorer = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer"
 
     if windowsversion >= (6, 0):
-        # always show all icons and notifications on the taskbar
-        changed |= reg.set_value_dword(explorer + r"\EnableAutoTray", 0)
-
         # never combine taskbar buttons
         changed |= reg.set_value_dword(
             explorer + r"\Advanced\TaskbarGlomLevel",
