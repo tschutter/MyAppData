@@ -23,10 +23,3 @@ without git::
 
     cd MyAppData/..
     zip -r /tmp/MyAppData.zip MyAppData --exclude .git\*
-
-TODO
-----
-
-* Win7 do not merge toolbar icons.
-
-* Do not hide unused tooltray icons.
