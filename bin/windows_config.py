@@ -497,7 +497,7 @@ def main():
         action="store_false",
         dest="verbose",
         default=True,
-        help="print commands as they are executed"
+        help="do not print commands as they are executed"
     )
     args = arg_parser.parse_args()
     if args.dryrun:
