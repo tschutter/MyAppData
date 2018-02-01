@@ -16,4 +16,4 @@ if not ERRORLEVEL 1 goto :endif2
     goto :eof
 :endif2
 
-rem python.exe "%~dp0windows_config.py" %*
+python.exe "%~dp0windows_config.py" %*
