@@ -8,13 +8,13 @@ Usage
 
 Initial checkout::
 
-    cd %AppData%
+    cd %LOCALAPPDATA%
     git clone git@github.com:tschutter/MyAppData.git
     MyAppData\bin\windows_config
 
 Update::
 
-    cd %AppData%\MyAppData
+    cd %LOCALAPPDATA%\MyAppData
     git pull
     windows_config
 
