@@ -10,4 +10,6 @@ set STASHED=%ERRORLEVEL%
 
 git pull
 
-if %STASHED% EQU 1 git stash pop --quiet
+rem git version 2.24.0.windows.2 will delete .git/index if we specify
+rem --quiet
+if %STASHED% EQU 1 git stash pop
